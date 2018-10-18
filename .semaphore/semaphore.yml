@@ -8,6 +8,9 @@ agent:
 blocks:
   - name: "Build Cloud Images"
     task:
+      env_vars:
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
       prologue:
         commands:
           - checkout
