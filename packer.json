@@ -31,8 +31,7 @@
     {
       "type": "shell",
       "script": "setup.sh",
-      "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'",
-      "environment_vars": ["REDASH_VERSION={{user `redash_version`}}"]
+      "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'"
     },
     {
       "type": "shell",

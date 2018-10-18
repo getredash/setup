@@ -21,9 +21,7 @@ blocks:
       jobs:
       - name: Build AWS Image
         commands:
-          #- ./packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=redash-us-east-1 packer.json
-          - echo "hi"
+          - ./packer build -var 'redash_version=5.0.2-$SEMAPHORE_JOB_ID' -var 'image_version=5_0_2-$SEMAPHORE_JOB_ID' --only=redash-us-east-1 packer.json
       - name: Build GCE Image
         commands:
-          # - ./packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=googlecompute packer.json
-          - echo "hi"
+          - ./packer build -var 'redash_version=5.0.2-$SEMAPHORE_JOB_ID' -var 'image_version=5_0_2-$SEMAPHORE_JOB_ID' --only=googlecompute packer.json
