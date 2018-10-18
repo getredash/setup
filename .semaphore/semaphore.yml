@@ -17,7 +17,7 @@ blocks:
       jobs:
       - name: Build AWS Image
         commands:
-          - packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=redash-us-east-1 packer.json
+          - ./packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=redash-us-east-1 packer.json
       - name: Build GCE Image
         commands:
-          - packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=googlecompute packer.json
+          - ./packer build -var 'redash_version=5.0.2' -var 'image_version=5_0_2' --only=googlecompute packer.json
