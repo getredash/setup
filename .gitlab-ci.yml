@@ -1,0 +1,25 @@
+image:
+  name: hashicorp/packer:1.0.4
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+before_script:
+  - packer --version
+
+stages:
+  - validate
+  - build
+
+validate:
+  stage: validate
+  script:
+    - find . -maxdepth 1 -name '*.json' -print0 | xargs -t0n1 packer validate
+
+build:
+  stage: build
+  script:
+    - packer build -var "redash_version=5.0.2-$CI_JOB_ID" -var "image_version=5_0_2-$CI_JOB_ID" --only=redash-us-east-1 packer.json
+  when: manual
+  only:
+    - master
