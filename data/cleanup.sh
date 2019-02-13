@@ -11,5 +11,5 @@ rm -rf /var/lib/cloud/instance
 
 echo "Removing keys..."
 rm -f /root/.ssh/authorized_keys /etc/ssh/*key*
-dd if=/dev/zero of=/zerofile; sync; rm /zerofile; sync
+# dd if=/dev/zero of=/zerofile; sync; rm /zerofile; sync
 cat /dev/null > /var/log/lastlog; cat /dev/null > /var/log/wtmp
