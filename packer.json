@@ -1,6 +1,5 @@
 {
   "variables": {
-    "redash_version": "",
     "image_version": ""
   },
   "builders": [
@@ -19,14 +18,20 @@
       "source_image_family": "ubuntu-1804-lts",
       "zone": "us-central1-a",
       "ssh_username": "arik"
+    },
+    {
+      "type": "digitalocean",
+      "image": "ubuntu-18-04-x64",
+      "region": "nyc3",
+      "size": "1gb",
+      "ssh_username": "root",
+      "snapshot_name": "redash-{{user `image_version`}}-{{timestamp}}"
     }
   ],
   "provisioners": [
     {
       "type": "shell",
-      "inline": [
-        "sleep 30"
-      ]
+      "inline": ["sleep 30"]
     },
     {
       "type": "shell",
@@ -43,21 +48,41 @@
     },
     {
       "type": "file",
-      "source": "generate_key.sh",
+      "source": "data/generate_key.sh",
       "destination": "/tmp/rc.local"
     },
     {
+      "type": "file",
+      "source": "data/docker-compose-up.service",
+      "destination": "/tmp/docker-compose-up.service"
+    },
+    {
       "type": "shell",
-      "inline": ["sudo mv /tmp/rc.local /etc/rc.local", "sudo chown root /etc/rc.local", "sudo chmod 755 /etc/rc.local"]
+      "inline": [
+        "sudo mv /tmp/rc.local /etc/rc.local",
+        "sudo chown root /etc/rc.local",
+        "sudo chmod 755 /etc/rc.local",
+        "sudo mv /tmp/docker-compose-up.service /etc/systemd/system/docker-compose-up.service",
+        "sudo chown root /etc/systemd/system/docker-compose-up.service",
+        "sudo systemctl enable docker-compose-up"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "data/cleanup.sh",
+      "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'"
+    },
+    {
+      "type": "shell",
+      "script": "data/do_img_checks.sh",
+      "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'"
     }
   ],
   "post-processors": [
     {
       "type": "googlecompute-export",
       "only": ["googlecompute"],
-      "paths": [
-        "gs://redash-images/redash.{{user `redash_version`}}.tar.gz"
-      ],
+      "paths": ["gs://redash-images/redash.{{user `image_version`}}.tar.gz"],
       "keep_input_artifact": true
     }
   ]

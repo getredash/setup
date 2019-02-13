@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart Docker Service
+After=docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/opt/redash
+ExecStart=/usr/local/bin/docker-compose up -d
+
+[Install]
+WantedBy=default.target
