@@ -6,7 +6,9 @@ REDASH_BASE_PATH=/opt/redash
 
 install_docker(){
     # Install Docker
-    sudo apt-get update 
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get -qqy update
+    DEBIAN_FRONTEND=noninteractive sudo -E apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade 
     sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common wget pwgen
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -59,7 +61,8 @@ setup_compose() {
     sed -ri "s/image: redash\/redash:([A-Za-z0-9.-]*)/image: redash\/redash:$LATEST_VERSION/" docker-compose.yml
     echo "export COMPOSE_PROJECT_NAME=redash" >> ~/.profile
     echo "export COMPOSE_FILE=/opt/redash/docker-compose.yml" >> ~/.profile
-    source ~/.profile
+    export COMPOSE_PROJECT_NAME=redash
+    export COMPOSE_FILE=/opt/redash/docker-compose.yml
     sudo docker-compose run --rm server create_db
     sudo docker-compose up -d
 }
