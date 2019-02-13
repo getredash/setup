@@ -1,6 +1,5 @@
 {
   "variables": {
-    "redash_version": "",
     "image_version": ""
   },
   "builders": [
@@ -47,8 +46,18 @@
       "destination": "/tmp/rc.local"
     },
     {
+      "type": "file",
+      "source": "docker-compose-up.service",
+      "destination": "/tmp/docker-compose-up.service"
+    },
+    {
       "type": "shell",
-      "inline": ["sudo mv /tmp/rc.local /etc/rc.local", "sudo chown root /etc/rc.local", "sudo chmod 755 /etc/rc.local"]
+      "inline": ["sudo mv /tmp/rc.local /etc/rc.local", 
+                 "sudo chown root /etc/rc.local", 
+                 "sudo chmod 755 /etc/rc.local",
+                 "sudo mv /tmp/docker-compose-up.service /etc/systemd/system/docker-compose-up.service",
+                 "sudo chown root /etc/systemd/system/docker-compose-up.service",
+                 "sudo systemctl enable docker-compose-up"]
     }
   ],
   "post-processors": [
@@ -56,7 +65,7 @@
       "type": "googlecompute-export",
       "only": ["googlecompute"],
       "paths": [
-        "gs://redash-images/redash.{{user `redash_version`}}.tar.gz"
+        "gs://redash-images/redash.{{user `image_version`}}.tar.gz"
       ],
       "keep_input_artifact": true
     }
