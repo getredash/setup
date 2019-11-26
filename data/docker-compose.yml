@@ -1,4 +1,4 @@
-version: "2"
+version: "3.4"
 x-redash-service: &redash-service
   image: redash/redash:8.0.0.b32245
   depends_on:
