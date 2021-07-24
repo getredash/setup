@@ -9,7 +9,7 @@ install_docker(){
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get -qqy update
     DEBIAN_FRONTEND=noninteractive sudo -E apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade 
-    sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common wget pwgen
+    sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common pwgen
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     sudo apt-get update && sudo apt-get -y install docker-ce
@@ -59,7 +59,7 @@ setup_compose() {
 
     cd $REDASH_BASE_PATH
     GIT_BRANCH="${REDASH_BRANCH:-master}" # Default branch/version to master if not specified in REDASH_BRANCH env var
-    wget https://raw.githubusercontent.com/getredash/setup/${GIT_BRANCH}/data/docker-compose.yml
+    curl -OL https://raw.githubusercontent.com/getredash/setup/${GIT_BRANCH}/data/docker-compose.yml
     sed -ri "s/image: redash\/redash:([A-Za-z0-9.-]*)/image: redash\/redash:$LATEST_VERSION/" docker-compose.yml
     echo "export COMPOSE_PROJECT_NAME=redash" >> ~/.profile
     echo "export COMPOSE_FILE=/opt/redash/docker-compose.yml" >> ~/.profile
