@@ -21,3 +21,16 @@ See [Upgrade Guide](https://redash.io/help/open-source/admin-guide/how-to-upgrad
 ### How do I use `setup.sh` on a different operating system?
 
 You will need to update the `install_docker` function and maybe other functions as well.
+
+### How do I remove Redash if I not longer need it?
+
+1. Stop the Redash container and remove the images using `docker-compose down --volumes --rmi all`.
+2. Remove the following lines from `~/.profile`
+
+  ```
+  export COMPOSE_PROJECT_NAME=redash
+  export COMPOSE_FILE=/opt/redash/docker-compose.yml
+  ```
+  
+3. Delete the Redash folder using `sudo rm -fr /opt/redash`
+
