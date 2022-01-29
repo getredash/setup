@@ -1,25 +1,23 @@
 #!/usr/bin/env bash
-# This script setups dockerized Redash on Ubuntu 18.04.
+# This script setups dockerized Redash on Amazon Linux 2.
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
 
 install_docker(){
+    sudo yum -y update
+    sudo amazon-linux-extras install epel
+    sudo yum install -y pwgen
+
     # Install Docker
-    export DEBIAN_FRONTEND=noninteractive
-    sudo apt-get -qqy update
-    DEBIAN_FRONTEND=noninteractive sudo -E apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade 
-    sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common wget pwgen
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update && sudo apt-get -y install docker-ce
+    sudo yum install -y docker
+    sudo systemctl enable docker
 
     # Install Docker Compose
-    sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-
-    # Allow current user to run Docker commands
-    sudo usermod -aG docker $USER
+    wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)
+    sudo mv docker-compose-$(uname -s)-$(uname -m) /usr/local/bin/docker-compose
+    sudo chmod -v +x /usr/local/bin/docker-compose
+    docker-compose -v
 }
 
 create_directories() {
@@ -54,17 +52,20 @@ create_config() {
 }
 
 setup_compose() {
-    REQUESTED_CHANNEL=stable
-    LATEST_VERSION=`curl -s "https://version.redash.io/api/releases?channel=$REQUESTED_CHANNEL"  | json_pp  | grep "docker_image" | head -n 1 | awk 'BEGIN{FS=":"}{print $3}' | awk 'BEGIN{FS="\""}{print $1}'`
+#    REDASH_VERSION=10.1.0.b50633
 
     cd $REDASH_BASE_PATH
     GIT_BRANCH="${REDASH_BRANCH:-master}" # Default branch/version to master if not specified in REDASH_BRANCH env var
-    wget https://raw.githubusercontent.com/getredash/setup/${GIT_BRANCH}/data/docker-compose.yml
-    sed -ri "s/image: redash\/redash:([A-Za-z0-9.-]*)/image: redash\/redash:$LATEST_VERSION/" docker-compose.yml
+    wget https://raw.githubusercontent.com/motoy3d/redash-setup/${GIT_BRANCH}/data/docker-compose.yml
+#    sed -ri "s/image: redash\/redash:([A-Za-z0-9.-]*)/image: redash\/redash:$REDASH_VERSION/" docker-compose.yml
     echo "export COMPOSE_PROJECT_NAME=redash" >> ~/.profile
     echo "export COMPOSE_FILE=/opt/redash/docker-compose.yml" >> ~/.profile
     export COMPOSE_PROJECT_NAME=redash
     export COMPOSE_FILE=/opt/redash/docker-compose.yml
+
+    sudo sed -ri "s/HOME\/bin/HOME\/bin:\/usr\/local\/bin/" /root/.bash_profile
+    sudo sed -e 's/secure_path.*/secure_path = \/sbin:\/bin:\/usr\/sbin:\/usr\/bin:\/usr\/local\/bin/' /etc/sudoers | sudo EDITOR=tee visudo >/dev/null
+
     sudo docker-compose run --rm server create_db
     sudo docker-compose up -d
 }

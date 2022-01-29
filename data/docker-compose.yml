@@ -1,11 +1,14 @@
-version: "2"
+version: "3.7"
 x-redash-service: &redash-service
-  image: redash/redash:8.0.0.b32245
+  image: redash/redash:10.1.0.b50633
   depends_on:
     - postgres
     - redis
   env_file: /opt/redash/env
+  environment:
+    REDASH_ADDITIONAL_QUERY_RUNNERS: "redash.query_runner.python"
   restart: always
+
 services:
   server:
     <<: *redash-service
@@ -14,33 +17,53 @@ services:
       - "5000:5000"
     environment:
       REDASH_WEB_WORKERS: 4
+    restart: always
+
   scheduler:
     <<: *redash-service
     command: scheduler
     environment:
       QUEUES: "celery"
       WORKERS_COUNT: 1
+    restart: always
+
   scheduled_worker:
     <<: *redash-service
     command: worker
     environment:
       QUEUES: "scheduled_queries,schemas"
       WORKERS_COUNT: 1
+    restart: always
+
   adhoc_worker:
     <<: *redash-service
     command: worker
     environment:
       QUEUES: "queries"
       WORKERS_COUNT: 2
-  redis:
-    image: redis:5.0-alpine
+# limits memory if this container uses much memory.
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 4g
     restart: always
+
+  redis:
+    image: redis:6-alpine
+    restart: always
+
   postgres:
-    image: postgres:9.6-alpine
+    image: postgres:14-alpine
     env_file: /opt/redash/env
     volumes:
       - /opt/redash/postgres-data:/var/lib/postgresql/data
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
   nginx:
     image: redash/nginx:latest
     ports:
