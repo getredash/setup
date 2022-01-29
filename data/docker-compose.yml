@@ -41,11 +41,11 @@ services:
     environment:
       QUEUES: "queries"
       WORKERS_COUNT: 2
-# limits memory if this container uses much memory.
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 4g
+    # limits memory if this container uses much memory.
+    #    deploy:
+    #      resources:
+    #        limits:
+    #          memory: 4g
     restart: always
 
   redis:
