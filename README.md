@@ -4,9 +4,9 @@ This is a forked setup for Redash on a single Amazon Linux 2 server, which uses 
 
 This is the same setup Redash team use for their official images (for AWS & Google Cloud) and can be used as reference if you want to manually setup Redash in a different environment (different OS or different deployment location).
 
-* `setup.sh` is the script that installs everything and creates the directories.
-* `docker-compose.yml` is the Docker Compose setup we use.
-* `packer.json` is Packer configuration we use to create the Cloud images.
+- `setup.sh` is the script that installs everything and creates the directories.
+- `docker-compose.yml` is the Docker Compose setup we use.
+- `packer.json` is Packer configuration we use to create the Cloud images.
 
 ## FAQ
 
