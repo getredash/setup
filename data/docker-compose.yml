@@ -1,10 +1,10 @@
 version: "2"
 x-redash-service: &redash-service
-  image: redash/redash:8.0.0.b32245
+  image: redash/redash:latest
   depends_on:
     - postgres
     - redis
-  env_file: /opt/redash/env
+  env_file: /Users/sild/Projects/Personal/local_db/db_data/env
   restart: always
 services:
   server:
@@ -13,7 +13,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      REDASH_WEB_WORKERS: 4
+      REDASH_WEB_WORKERS: 1
   scheduler:
     <<: *redash-service
     command: scheduler
@@ -31,15 +31,17 @@ services:
     command: worker
     environment:
       QUEUES: "queries"
-      WORKERS_COUNT: 2
+      WORKERS_COUNT: 1
   redis:
     image: redis:5.0-alpine
     restart: always
   postgres:
     image: postgres:9.6-alpine
-    env_file: /opt/redash/env
+    ports:
+        - "5432:5432"
+    env_file: /Users/sild/Projects/Personal/local_db/db_data/env
     volumes:
-      - /opt/redash/postgres-data:/var/lib/postgresql/data
+      - /Users/sild/Projects/Personal/local_db/db_data/postgres-data:/var/lib/postgresql/data
     restart: always
   nginx:
     image: redash/nginx:latest
