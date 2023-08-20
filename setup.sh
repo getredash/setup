@@ -29,7 +29,7 @@ install_docker(){
 create_directories() {
     if [ ! -e $REDASH_BASE_PATH ]; then
         sudo mkdir -p $REDASH_BASE_PATH
-        sudo chown $USER:$USER $REDASH_BASE_PATH
+        sudo chown "$USER:" $REDASH_BASE_PATH
     fi
 
     if [ ! -e $REDASH_BASE_PATH/postgres-data ]; then
