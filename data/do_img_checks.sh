@@ -94,7 +94,7 @@ function checkLogs() {
   for f in /var/log/*-????????; do
     [[ -e $f ]] || break
     if [ "$f" != "$cp_ignore" ]; then
-      echo -en "\e[93m[WARN]\e[0m Log archive ${f} found; Contents:\n"
+      echo -en "\e[93m[WARN]\e[0m Log archive $f found; Contents:\n"
       cat "$f"
       ((WARN++))
       if [[ $STATUS != 2 ]]; then
@@ -104,7 +104,7 @@ function checkLogs() {
   done
   for f in /var/log/*.[0-9]; do
     [[ -e $f ]] || break
-    echo -en "\e[93m[WARN]\e[0m Log archive ${f} found; Contents:\n"
+    echo -en "\e[93m[WARN]\e[0m Log archive $f found; Contents:\n"
     cat "$f"
     ((WARN++))
     if [[ $STATUS != 2 ]]; then
@@ -115,7 +115,7 @@ function checkLogs() {
     [[ -e $f ]] || break
     if [[ "$f" == '/var/log/lfd.log' && "$(grep -E -v '/var/log/messages has been reset| Watching /var/log/messages' "$f" | wc -c)" -gt 50 ]]; then
       if [ "$f" != "$cp_ignore" ]; then
-        echo -en "\e[93m[WARN]\e[0m un-cleared log file, ${f} found; Contents:\n"
+        echo -en "\e[93m[WARN]\e[0m un-cleared log file, $f found; Contents:\n"
         cat "$f"
         ((WARN++))
         if [[ $STATUS != 2 ]]; then
@@ -124,7 +124,7 @@ function checkLogs() {
       fi
     elif [[ "$f" != '/var/log/lfd.log' && "$(wc -c <"$f")" -gt 50 ]]; then
       if [ "$f" != "$cp_ignore" ]; then
-        echo -en "\e[93m[WARN]\e[0m un-cleared log file, ${f} found; Contents:\n"
+        echo -en "\e[93m[WARN]\e[0m un-cleared log file, $f found; Contents:\n"
         cat "$f"
         ((WARN++))
         if [[ $STATUS != 2 ]]; then
@@ -142,10 +142,10 @@ function checkRoot() {
     IFS=':' read -r -a u <<<"$usr"
     if [[ "${u[0]}" == "$user" ]]; then
       if [[ ${u[1]} == "!" ]] || [[ ${u[1]} == "!!" ]] || [[ ${u[1]} == "*" ]]; then
-        echo -en "\e[32m[PASS]\e[0m User ${user} has no password set.\n"
+        echo -en "\e[32m[PASS]\e[0m User $user has no password set.\n"
         ((PASS++))
       else
-        echo -en "\e[41m[FAIL]\e[0m User ${user} has a password set on their account.\n"
+        echo -en "\e[41m[FAIL]\e[0m User $user has a password set on their account.\n"
         ((FAIL++))
         STATUS=2
       fi
@@ -155,10 +155,10 @@ function checkRoot() {
     if [ -d "$uhome"/.ssh/ ]; then
       if ls "$uhome"/.ssh/* >/dev/null 2>&1; then
         for key in "$uhome"/.ssh/*; do
-          if [ "$key" == "${uhome}/.ssh/authorized_keys" ]; then
+          if [ "$key" == "$uhome/.ssh/authorized_keys" ]; then
 
             if [ "$(wc -c <"$key")" -gt 50 ]; then
-              echo -en "\e[41m[FAIL]\e[0m User \e[1m${user}\e[0m has a populated authorized_keys file in \e[93m${key}\e[0m\n"
+              echo -en "\e[41m[FAIL]\e[0m User \e[1m$user\e[0m has a populated authorized_keys file in \e[93m$key\e[0m\n"
               akey=$(cat "$key")
               echo "File Contents:"
               echo "$akey"
@@ -166,9 +166,9 @@ function checkRoot() {
               ((FAIL++))
               STATUS=2
             fi
-          elif [ "$key" == "${uhome}/.ssh/id_rsa" ]; then
+          elif [ "$key" == "$uhome/.ssh/id_rsa" ]; then
             if [ "$(wc -c <"$key")" -gt 0 ]; then
-              echo -en "\e[41m[FAIL]\e[0m User \e[1m${user}\e[0m has a private key file in \e[93m${key}\e[0m\n"
+              echo -en "\e[41m[FAIL]\e[0m User \e[1m$user\e[0m has a private key file in \e[93m$key\e[0m\n"
               akey=$(cat "$key")
               echo "File Contents:"
               echo "$akey"
@@ -176,21 +176,21 @@ function checkRoot() {
               ((FAIL++))
               STATUS=2
             else
-              echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has empty private key file in \e[93m${key}\e[0m\n"
+              echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has empty private key file in \e[93m$key\e[0m\n"
               ((WARN++))
               if [[ $STATUS != 2 ]]; then
                 STATUS=1
               fi
             fi
-          elif [ "$key" != "${uhome}/.ssh/known_hosts" ]; then
-            echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has a file in their .ssh directory at \e[93m${key}\e[0m\n"
+          elif [ "$key" != "$uhome/.ssh/known_hosts" ]; then
+            echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has a file in their .ssh directory at \e[93m$key\e[0m\n"
             ((WARN++))
             if [[ $STATUS != 2 ]]; then
               STATUS=1
             fi
           else
             if [ "$(wc -c <"$key")" -gt 50 ]; then
-              echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has a populated known_hosts file in \e[93m${key}\e[0m\n"
+              echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has a populated known_hosts file in \e[93m$key\e[0m\n"
               ((WARN++))
               if [[ $STATUS != 2 ]]; then
                 STATUS=1
@@ -199,20 +199,20 @@ function checkRoot() {
           fi
         done
       else
-        echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m has no SSH keys present\n"
+        echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m has no SSH keys present\n"
       fi
     else
-      echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m does not have an .ssh directory\n"
+      echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m does not have an .ssh directory\n"
     fi
     if [ -f /root/.bash_history ]; then
 
       BH_S=$(wc -c </root/.bash_history)
 
       if [[ $BH_S -lt 200 ]]; then
-        echo -en "\e[32m[PASS]\e[0m ${user}'s Bash History appears to have been cleared\n"
+        echo -en "\e[32m[PASS]\e[0m $user's Bash History appears to have been cleared\n"
         ((PASS++))
       else
-        echo -en "\e[41m[FAIL]\e[0m ${user}'s Bash History should be cleared to prevent sensitive information from leaking\n"
+        echo -en "\e[41m[FAIL]\e[0m $user's Bash History should be cleared to prevent sensitive information from leaking\n"
         ((FAIL++))
         STATUS=2
       fi
@@ -223,7 +223,7 @@ function checkRoot() {
       ((PASS++))
     fi
   else
-    echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m does not have a directory in /home\n"
+    echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m does not have a directory in /home\n"
   fi
   echo -en "\n\n"
   return 1
@@ -238,16 +238,16 @@ function checkUsers() {
     elif [[ $user == "nfsnobody" ]]; then
       :
     else
-      echo -en "\nChecking user: ${user}...\n"
+      echo -en "\nChecking user: $user...\n"
       for usr in "${SHADOW[@]}"; do
         IFS=':' read -r -a u <<<"$usr"
         if [[ "${u[0]}" == "$user" ]]; then
           if [[ ${u[1]} == "!" ]] || [[ ${u[1]} == "!!" ]] || [[ ${u[1]} == "*" ]]; then
-            echo -en "\e[32m[PASS]\e[0m User ${user} has no password set.\n"
+            echo -en "\e[32m[PASS]\e[0m User $user has no password set.\n"
             # shellcheck disable=SC2030
             ((PASS++))
           else
-            echo -en "\e[41m[FAIL]\e[0m User ${user} has a password set on their account. Only system users are allowed on the image.\n"
+            echo -en "\e[41m[FAIL]\e[0m User $user has a password set on their account. Only system users are allowed on the image.\n"
             # shellcheck disable=SC2030
             ((FAIL++))
             STATUS=2
@@ -255,14 +255,14 @@ function checkUsers() {
         fi
       done
       #echo "User Found: ${user}"
-      uhome="/home/${user}"
-      if [ -d "${uhome}/" ]; then
-        if [ -d "${uhome}/.ssh/" ]; then
-          if ls "${uhome}/.ssh/*" >/dev/null 2>&1; then
+      uhome="/home/$user"
+      if [ -d "$uhome/" ]; then
+        if [ -d "$uhome/.ssh/" ]; then
+          if ls "$uhome/.ssh/*" >/dev/null 2>&1; then
             for key in "$uhome"/.ssh/*; do
-              if [ "$key" == "${uhome}/.ssh/authorized_keys" ]; then
+              if [ "$key" == "$uhome/.ssh/authorized_keys" ]; then
                 if [ "$(wc -c <"$key")" -gt 50 ]; then
-                  echo -en "\e[41m[FAIL]\e[0m User \e[1m${user}\e[0m has a populated authorized_keys file in \e[93m${key}\e[0m\n"
+                  echo -en "\e[41m[FAIL]\e[0m User \e[1m$user\e[0m has a populated authorized_keys file in \e[93m$key\e[0m\n"
                   akey=$(cat "$key")
                   echo "File Contents:"
                   echo "$akey"
@@ -270,9 +270,9 @@ function checkUsers() {
                   ((FAIL++))
                   STATUS=2
                 fi
-              elif [ "$key" == "${uhome}/.ssh/id_rsa" ]; then
+              elif [ "$key" == "$uhome/.ssh/id_rsa" ]; then
                 if [ "$(wc -c <"$key")" -gt 0 ]; then
-                  echo -en "\e[41m[FAIL]\e[0m User \e[1m${user}\e[0m has a private key file in \e[93m${key}\e[0m\n"
+                  echo -en "\e[41m[FAIL]\e[0m User \e[1m$user\e[0m has a private key file in \e[93m$key\e[0m\n"
                   akey=$(cat "$key")
                   echo "File Contents:"
                   echo "$akey"
@@ -280,16 +280,16 @@ function checkUsers() {
                   ((FAIL++))
                   STATUS=2
                 else
-                  echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has empty private key file in \e[93m${key}\e[0m\n"
+                  echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has empty private key file in \e[93m$key\e[0m\n"
                   # shellcheck disable=SC2030
                   ((WARN++))
                   if [[ $STATUS != 2 ]]; then
                     STATUS=1
                   fi
                 fi
-              elif [ "$key" != "${uhome}/.ssh/known_hosts" ]; then
+              elif [ "$key" != "$uhome/.ssh/known_hosts" ]; then
 
-                echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has a file in their .ssh directory named \e[93m${key}\e[0m\n"
+                echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has a file in their .ssh directory named \e[93m$key\e[0m\n"
                 ((WARN++))
                 if [[ $STATUS != 2 ]]; then
                   STATUS=1
@@ -297,7 +297,7 @@ function checkUsers() {
 
               else
                 if [ "$(wc -c <"$key")" -gt 50 ]; then
-                  echo -en "\e[93m[WARN]\e[0m User \e[1m${user}\e[0m has a known_hosts file in \e[93m${key}\e[0m\n"
+                  echo -en "\e[93m[WARN]\e[0m User \e[1m$user\e[0m has a known_hosts file in \e[93m$key\e[0m\n"
                   ((WARN++))
                   if [[ $STATUS != 2 ]]; then
                     STATUS=1
@@ -308,24 +308,24 @@ function checkUsers() {
             done
 
           else
-            echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m has no SSH keys present\n"
+            echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m has no SSH keys present\n"
           fi
         else
-          echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m does not have an .ssh directory\n"
+          echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m does not have an .ssh directory\n"
         fi
       else
-        echo -en "\e[32m[ OK ]\e[0m User \e[1m${user}\e[0m does not have a directory in /home\n"
+        echo -en "\e[32m[ OK ]\e[0m User \e[1m$user\e[0m does not have a directory in /home\n"
       fi
 
       # Check for an uncleared .bash_history for this user
-      if [ -f "${uhome}/.bash_history" ]; then
-        BH_S=$(wc -c <"${uhome}/.bash_history")
+      if [ -f "$uhome/.bash_history" ]; then
+        BH_S=$(wc -c <"$uhome/.bash_history")
 
         if [[ $BH_S -lt 200 ]]; then
-          echo -en "\e[32m[PASS]\e[0m ${user}'s Bash History appears to have been cleared\n"
+          echo -en "\e[32m[PASS]\e[0m $user's Bash History appears to have been cleared\n"
           ((PASS++))
         else
-          echo -en "\e[41m[FAIL]\e[0m ${user}'s Bash History should be cleared to prevent sensitive information from leaking\n"
+          echo -en "\e[41m[FAIL]\e[0m $user's Bash History should be cleared to prevent sensitive information from leaking\n"
           ((FAIL++))
           STATUS=2
 
@@ -341,11 +341,11 @@ function checkFirewall() {
     fw="ufw"
     ufwa=$(ufw status | head -1 | sed -e "s/^Status:\ //")
     if [[ $ufwa == "active" ]]; then
-      FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+      FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
       # shellcheck disable=SC2031
       ((PASS++))
     else
-      FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+      FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
       # shellcheck disable=SC2031
       ((WARN++))
     fi
@@ -354,27 +354,27 @@ function checkFirewall() {
       fw="csf"
       if [[ $(systemctl status "$fw" >/dev/null 2>&1) ]]; then
 
-        FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+        FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
         ((PASS++))
       elif cmdExists "firewall-cmd"; then
         if [[ $(systemctl is-active firewalld >/dev/null 2>&1 && echo 1 || echo 0) ]]; then
-          FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+          FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
           ((PASS++))
         else
-          FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+          FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
           ((WARN++))
         fi
       else
-        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
         ((WARN++))
       fi
     else
       fw="firewalld"
       if [[ $(systemctl is-active firewalld >/dev/null 2>&1 && echo 1 || echo 0) ]]; then
-        FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+        FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
         ((PASS++))
       else
-        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
         ((WARN++))
       fi
     fi
@@ -385,29 +385,29 @@ function checkFirewall() {
       fw="ufw"
       ufwa=$(ufw status | head -1 | sed -e "s/^Status:\ //")
       if [[ $ufwa == "active" ]]; then
-        FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+        FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
         ((PASS++))
       else
-        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
         ((WARN++))
       fi
     elif cmdExists "firewall-cmd"; then
       fw="firewalld"
       if [[ $(systemctl is-active --quiet "$fw") ]]; then
-        FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+        FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
         ((PASS++))
       else
-        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
         ((WARN++))
       fi
     else
       # user could be using vanilla iptables, check if kernel module is loaded
       fw="iptables"
       if lsmod | grep -q '^ip_tables' 2>/dev/null; then
-        FW_VER="\e[32m[PASS]\e[0m Firewall service (${fw}) is active\n"
+        FW_VER="\e[32m[PASS]\e[0m Firewall service ($fw) is active\n"
         ((PASS++))
       else
-        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure ${fw} is installed and configured\n"
+        FW_VER="\e[93m[WARN]\e[0m No firewall is configured. Ensure $fw is installed and configured\n"
         ((WARN++))
       fi
     fi
@@ -435,7 +435,7 @@ function checkUpdates() {
     fi
 
     if [[ $update_count -gt 0 ]]; then
-      echo -en "\e[41m[FAIL]\e[0m There are ${update_count} security updates available for this image that have not been installed.\n"
+      echo -en "\e[41m[FAIL]\e[0m There are $update_count security updates available for this image that have not been installed.\n"
       echo -en
       echo -en "Here is a list of the security updates that are not installed:\n"
       sleep 2
@@ -453,7 +453,7 @@ function checkUpdates() {
 
     update_count=$(yum check-update --security --quiet | wc -l)
     if [[ $update_count -gt 0 ]]; then
-      echo -en "\e[41m[FAIL]\e[0m There are ${update_count} security updates available for this image that have not been installed.\n"
+      echo -en "\e[41m[FAIL]\e[0m There are $update_count security updates available for this image that have not been installed.\n"
       ((FAIL++))
       STATUS=2
     else
@@ -481,14 +481,14 @@ function checkCloudInit() {
 }
 
 clear
-echo "DigitalOcean Marketplace Image Validation Tool ${VERSION}"
-echo "Executed on: ${RUNDATE}"
+echo "DigitalOcean Marketplace Image Validation Tool $VERSION"
+echo "Executed on: $RUNDATE"
 echo "Checking local system for Marketplace compatibility..."
 
 getDistro
 
-echo -en "\n\e[1mDistribution:\e[0m ${OS}\n"
-echo -en "\e[1mVersion:\e[0m ${VER}\n\n"
+echo -en "\n\e[1mDistribution:\e[0m $OS\n"
+echo -en "\e[1mVersion:\e[0m $VER\n\n"
 
 ost=0
 osv=0
@@ -558,19 +558,19 @@ else
 fi
 
 if [[ $ost == 1 ]]; then
-  echo -en "\e[32m[PASS]\e[0m Supported Operating System Detected: ${OS}\n"
+  echo -en "\e[32m[PASS]\e[0m Supported Operating System Detected: $OS\n"
   ((PASS++))
 else
-  echo -en "\e[41m[FAIL]\e[0m ${OS} is not a supported Operating System\n"
+  echo -en "\e[41m[FAIL]\e[0m $OS is not a supported Operating System\n"
   ((FAIL++))
   STATUS=2
 fi
 
 if [[ $osv == 1 ]]; then
-  echo -en "\e[32m[PASS]\e[0m Supported Release Detected: ${VER}\n"
+  echo -en "\e[32m[PASS]\e[0m Supported Release Detected: $VER\n"
   ((PASS++))
 elif [[ $ost == 1 ]]; then
-  echo -en "\e[41m[FAIL]\e[0m ${OS} ${VER} is not a supported Operating System Version\n"
+  echo -en "\e[41m[FAIL]\e[0m $OS $VER is not a supported Operating System Version\n"
   ((FAIL++))
   STATUS=2
 else
@@ -611,9 +611,9 @@ else
   echo -en "Scan Complete. \n\e[41mOne or more tests failed.  Please review these items and re-test.\e[0m\n"
 fi
 echo "---------------------------------------------------------------------------------------------------"
-echo -en "\e[1m${PASS} Tests PASSED\e[0m\n"
-echo -en "\e[1m${WARN} WARNINGS\e[0m\n"
-echo -en "\e[1m${FAIL} Tests FAILED\e[0m\n"
+echo -en "\e[1m$PASS Tests PASSED\e[0m\n"
+echo -en "\e[1m$WARN WARNINGS\e[0m\n"
+echo -en "\e[1m$FAIL Tests FAILED\e[0m\n"
 echo -en "---------------------------------------------------------------------------------------------------\n"
 
 if [[ $STATUS == 0 ]]; then
