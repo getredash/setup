@@ -20,28 +20,28 @@ install_docker(){
     sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
     # Install Docker Compose
-    sudo ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
+    sudo ln -sfv /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
 
   # Allow current user to run Docker commands
   sudo usermod -aG docker "$USER"
 }
 
 create_directories() {
-  if [[ ! -e $REDASH_BASE_PATH ]]; then
-    sudo mkdir -p "$REDASH_BASE_PATH"
-    sudo chown "$USER": "$REDASH_BASE_PATH"
-  fi
+    if [ ! -e $REDASH_BASE_PATH ]; then
+        sudo mkdir -p $REDASH_BASE_PATH
+        sudo chown $USER:$USER $REDASH_BASE_PATH
+    fi
 
-  if [[ ! -e $REDASH_BASE_PATH/postgres-data ]]; then
-    mkdir "$REDASH_BASE_PATH"/postgres-data
-  fi
+    if [ ! -e $REDASH_BASE_PATH/postgres-data ]; then
+        mkdir $REDASH_BASE_PATH/postgres-data
+    fi
 }
 
 create_config() {
-  if [[ -e $REDASH_BASE_PATH/env ]]; then
-    rm "$REDASH_BASE_PATH"/env
-    touch "$REDASH_BASE_PATH"/env
-  fi
+    if [ -e $REDASH_BASE_PATH/env ]; then
+        rm $REDASH_BASE_PATH/env
+        touch $REDASH_BASE_PATH/env
+    fi
 
   COOKIE_SECRET=$(pwgen -1s 32)
   SECRET_KEY=$(pwgen -1s 32)
