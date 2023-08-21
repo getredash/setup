@@ -502,21 +502,21 @@ if [[ $OS == "Ubuntu" ]]; then
 elif [[ "$OS" =~ Debian.* ]]; then
   ost=1
   case "$VER" in
-  9)
-    osv=1
-    ;;
-  10)
-    osv=1
-    ;;
-  11)
-    osv=1
-    ;;
-  12)
-    osv=1
-    ;;
-  *)
-    osv=2
-    ;;
+    9)
+      osv=1
+      ;;
+    10)
+      osv=1
+      ;;
+    11)
+      osv=1
+      ;;
+    12)
+      osv=1
+      ;;
+    *)
+      osv=2
+      ;;
   esac
 
 elif [[ $OS == "CentOS Linux" ]]; then
