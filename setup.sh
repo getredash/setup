@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This script setups dockerized Redash on Ubuntu 18.04.
+# This script setups dockerized Redash on Ubuntu 20.04.
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
@@ -9,32 +9,36 @@ install_docker() {
   export DEBIAN_FRONTEND=noninteractive
   sudo apt-get -qqy update
   DEBIAN_FRONTEND=noninteractive sudo -E apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-  sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common pwgen
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  sudo apt-get update && sudo apt-get -y install docker-ce
+  sudo apt-get -yy install apt-transport-https ca-certificates curl software-properties-common pwgen gnupg
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  echo \
+    "deb [arch=""$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    ""$(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
+    sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
   # Install Docker Compose
-  sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-"$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  sudo chmod +x /usr/local/bin/docker-compose
+  sudo ln -sfv /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
 
   # Allow current user to run Docker commands
   sudo usermod -aG docker "$USER"
 }
 
 create_directories() {
-  if [[ ! -e $REDASH_BASE_PATH ]]; then
+  if [ ! -e "$REDASH_BASE_PATH" ]; then
     sudo mkdir -p "$REDASH_BASE_PATH"
-    sudo chown "$USER": "$REDASH_BASE_PATH"
+    sudo chown "$USER:" "$REDASH_BASE_PATH"
   fi
 
-  if [[ ! -e $REDASH_BASE_PATH/postgres-data ]]; then
+  if [ ! -e "$REDASH_BASE_PATH"/postgres-data ]; then
     mkdir "$REDASH_BASE_PATH"/postgres-data
   fi
 }
 
 create_config() {
-  if [[ -e $REDASH_BASE_PATH/env ]]; then
+  if [ -e "$REDASH_BASE_PATH"/env ]; then
     rm "$REDASH_BASE_PATH"/env
     touch "$REDASH_BASE_PATH"/env
   fi
@@ -66,7 +70,7 @@ setup_compose() {
   echo "export COMPOSE_PROJECT_NAME=redash" >>~/.profile
   echo "export COMPOSE_FILE=$REDASH_BASE_PATH/docker-compose.yml" >>~/.profile
   export COMPOSE_PROJECT_NAME=redash
-  export COMPOSE_FILE=$REDASH_BASE_PATH/docker-compose.yml
+  export COMPOSE_FILE="$REDASH_BASE_PATH"/docker-compose.yml
   sudo docker-compose run --rm server create_db
   sudo docker-compose up -d
 }
