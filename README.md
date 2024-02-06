@@ -1,12 +1,17 @@
-# Setup script for Redash with Docker on Ubuntu 20.04.
+# Setup script for Redash with Docker on Ubuntu Server
 
-This is a reference setup for Redash on a single Ubuntu 20.04 server, which uses Docker and Docker Compose for deployment and management.
+This is a reference setup for Redash on a single Ubuntu server, which uses Docker and Docker Compose for deployment and management.
 
 This is the same setup we use for our official images (for AWS & Google Cloud) and can be used as reference if you want to manually setup Redash in a different environment (different OS or different deployment location).
 
 - `setup.sh` is the script that installs everything and creates the directories.
 - `docker-compose.yml` is the Docker Compose setup we use.
 - `packer.json` is Packer configuration we use to create the Cloud images.
+
+## Tested
+
+- Ubuntu 20.04 LTS
+- Ubuntu 22.04 LTS
 
 ## FAQ
 
