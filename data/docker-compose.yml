@@ -34,7 +34,7 @@ services:
       WORKERS_COUNT: 2
   redis:
     image: redis:7-alpine
-    restart: always
+    restart: unless-stopped
   postgres:
     image: postgres:9.6-alpine
     env_file: /opt/redash/env
