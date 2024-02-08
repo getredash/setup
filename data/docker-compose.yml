@@ -33,7 +33,7 @@ services:
       QUEUES: "queries"
       WORKERS_COUNT: 2
   redis:
-    image: redis:5.0-alpine
+    image: redis:7-alpine
     restart: unless-stopped
   postgres:
     image: pgautoupgrade/pgautoupgrade:15-alpine3.8
