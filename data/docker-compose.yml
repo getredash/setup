@@ -33,14 +33,14 @@ services:
       QUEUES: "queries"
       WORKERS_COUNT: 2
   redis:
-    image: redis:5.0-alpine
-    restart: always
+    image: redis:7-alpine
+    restart: unless-stopped
   postgres:
-    image: postgres:9.6-alpine
+    image: pgautoupgrade/pgautoupgrade:15-alpine3.8
     env_file: /opt/redash/env
     volumes:
       - /opt/redash/postgres-data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
   nginx:
     image: redash/nginx:latest
     ports:
