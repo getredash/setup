@@ -22,7 +22,7 @@ See [Upgrade Guide](https://redash.io/help/open-source/admin-guide/how-to-upgrad
 
 You will need to update the `install_docker` function and maybe other functions as well.
 
-### How do I remove Redash if I not longer need it?
+### How do I remove Redash if I no longer need it?
 
 1. Stop the Redash container and remove the images using `docker-compose down --volumes --rmi all`.
 2. Remove the following lines from `~/.profile`
