@@ -2,7 +2,8 @@
 
 # Trivial script to add Redash to the user login profile
 
-cat <<EOF >>~/.profile
+cat <<EOF >>~/__TARGET_FILE__
+
 # Added by Redash 'redash_make_default.sh' script
 export COMPOSE_PROJECT_NAME=redash
 export COMPOSE_FILE=__BASE_PATH__/compose.yaml

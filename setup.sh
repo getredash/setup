@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# This script sets up dockerized Redash on Debian 12.x, Ubuntu 20.04, and Ubuntu 22.04
+
+# This script sets up dockerized Redash on Debian 12.x, Ubuntu LTS 20.04 & 22.04, and RHEL (and compatible) 8.x & 9.x
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
@@ -13,7 +14,7 @@ fi
 
 # Ensure the script is running on something it can work with
 if [ ! -f /etc/os-release ]; then
-  echo "Unknown Linux distribution.  This script presently works only on Debian and Ubuntu"
+  echo "Unknown Linux distribution.  This script presently works only on Debian, Ubuntu, and RHEL (and compatible)"
   exit
 fi
 
@@ -37,6 +38,36 @@ install_docker_debian() {
 deb [arch=""$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable
 EOF
   apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_rhel() {
+  echo "** Installing Docker (RHEL and compatible) **"
+
+  # Add EPEL package repository
+  if [ "x$DISTRO" = "xrhel" ]; then
+    # Genuine RHEL doesn't have the epel-release package in its repos
+    RHEL_VER=$(. /etc/os-release && echo "$VERSION_ID" | cut -d "." -f1)
+    if [ "0$RHEL_VER" -eq "9" ]; then
+      yum install -qy https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+    else
+      yum install -qy https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    fi
+    yum install -qy yum-utils
+  else
+    # RHEL compatible distros do have epel-release available
+    yum install -qy epel-release yum-utils
+  fi
+  yum update -qy
+
+  # Add Docker package repository
+  yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  yum update -qy
+
+  # Install Docker
+  yum install -qy docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin pwgen
+
+  # Start Docker and enable it for automatic start at boot
+  systemctl start docker && systemctl enable docker
 }
 
 install_docker_ubuntu() {
@@ -106,6 +137,7 @@ setup_compose() {
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/data/compose.yaml
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/redash_make_default.sh
   sed -i "s|__BASE_PATH__|${REDASH_BASE_PATH}|" redash_make_default.sh
+  sed -i "s|__TARGET_FILE__|$1|" redash_make_default.sh
   chmod +x redash_make_default.sh
   export COMPOSE_PROJECT_NAME=redash
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
@@ -125,23 +157,32 @@ echo "Redash installation script. :)"
 echo
 
 # Run the distro specific Docker installation
-DISTRO=$(grep '^ID=' /etc/os-release | cut -d '=' -f 2)
-if [ "x${DISTRO}" = "xdebian" ]; then
+DISTRO=$(. /etc/os-release && echo "$ID")
+PROFILE=.profile
+case "$DISTRO" in
+debian)
   install_docker_debian
-elif [ "x${DISTRO}" = "xubuntu" ]; then
+  ;;
+ubuntu)
   install_docker_ubuntu
-else
-  echo "This doesn't seem to be a Debian nor Ubuntu system, so this script doesn't know how to add Docker to it."
+  ;;
+almalinux|centos|ol|rhel|rocky)
+  PROFILE=.bashrc
+  install_docker_rhel
+  ;;
+*)
+  echo "This doesn't seem to be a Debian, Ubuntu, nor RHEL (compatible) system, so this script doesn't know how to add Docker to it."
   echo
-  echo "Please contact the Redash project via GitHub and ask about getting support added (or add it yourself and let us know). :)"
+  echo "Please contact the Redash project via GitHub and ask about getting support added, or add it yourself and let us know. :)"
   echo
   exit
-fi
+  ;;
+esac
 
 # Do the things that aren't distro specific
 create_directories
 create_env
-setup_compose
+setup_compose "$PROFILE"
 
 echo
 echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
