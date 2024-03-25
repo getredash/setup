@@ -38,8 +38,7 @@ See [Upgrade Guide](https://redash.io/help/open-source/admin-guide/how-to-upgrad
 You will need to create a docker installation function that suits your operating system, and maybe other functions as
 well.
 
-The `install_docker_debian()` and `install_docker_ubuntu()` functions in setup.sh shouldn't be too hard to adapt to
-other Linux distributions.
+The `install_docker_*()` functions in setup.sh shouldn't be too hard to adapt to other Linux distributions.
 
 ### How do I remove Redash if I no longer need it?
 
