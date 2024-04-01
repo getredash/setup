@@ -205,7 +205,7 @@ setup_compose() {
   export COMPOSE_PROJECT_NAME=redash
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
 
-  echo "** Initialising fresh Redash database **"
+  echo "** Initialising Redash database **"
   docker compose run --rm server create_db
 
   echo
