@@ -4,6 +4,7 @@
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
+OVERWRITE=no
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -16,6 +17,13 @@ fi
 if [ ! -f /etc/os-release ]; then
   echo "Unknown Linux distribution.  This script presently works only on Debian, Ubuntu, and RHEL (and compatible)"
   exit
+fi
+
+# Check if the --overwrite option was set
+if [ $# -ne 0 ]; then
+  if [ "x$1" = "x--overwrite" ]; then
+    OVERWRITE=yes
+  fi
 fi
 
 install_docker_debian() {
@@ -100,7 +108,19 @@ create_directories() {
     chown "$USER:" "$REDASH_BASE_PATH"
   fi
 
-  if [ ! -e "$REDASH_BASE_PATH"/postgres-data ]; then
+  if [ -e "$REDASH_BASE_PATH"/postgres-data ]; then
+    # PostgreSQL database directory seems to exist already
+
+    if [ "x$OVERWRITE" = "xyes" ]; then
+      # We've been asked to overwrite the existing database, so delete the old one
+      echo "Shutting down any running Redash instance"
+      docker compose -f "$REDASH_BASE_PATH"/compose.yaml down
+
+      echo "Removing old Redash PG database directory"
+      rm -rf "$REDASH_BASE_PATH"/postgres-data
+      mkdir "$REDASH_BASE_PATH"/postgres-data
+    fi
+  else
     mkdir "$REDASH_BASE_PATH"/postgres-data
   fi
 }
@@ -108,24 +128,67 @@ create_directories() {
 create_env() {
   echo "** Creating Redash environment file **"
 
-  if [ -e "$REDASH_BASE_PATH"/env ]; then
-    rm "$REDASH_BASE_PATH"/env
-    touch "$REDASH_BASE_PATH"/env
-  fi
-
+  # Minimum mandatory values (when not just developing)
   COOKIE_SECRET=$(pwgen -1s 32)
   SECRET_KEY=$(pwgen -1s 32)
-  POSTGRES_PASSWORD=$(pwgen -1s 32)
-  REDASH_DATABASE_URL="postgresql://postgres:${POSTGRES_PASSWORD}@postgres/postgres"
+  PG_PASSWORD=$(pwgen -1s 32)
+  DATABASE_URL="postgresql://postgres:${PG_PASSWORD}@postgres/postgres"
+
+  if [ -e "$REDASH_BASE_PATH"/env ]; then
+    # There's already an environment file
+
+    if [ "x$OVERWRITE" = "xno" ]; then
+      echo
+      echo "Environment file already exists, reusing that one + and adding any missing (mandatory) values"
+
+      # Add any missing mandatory values
+      REDASH_COOKIE_SECRET=
+      REDASH_COOKIE_SECRET=$(. "$REDASH_BASE_PATH"/env && echo "$REDASH_COOKIE_SECRET")
+      if [ -z "$REDASH_COOKIE_SECRET" ]; then
+        echo "REDASH_COOKIE_SECRET=$COOKIE_SECRET" >> "$REDASH_BASE_PATH"/env
+        echo "REDASH_COOKIE_SECRET added to env file"
+      fi
+
+      REDASH_SECRET_KEY=
+      REDASH_SECRET_KEY=$(. "$REDASH_BASE_PATH"/env && echo "$REDASH_SECRET_KEY")
+      if [ -z "$REDASH_SECRET_KEY" ]; then
+        echo "REDASH_SECRET_KEY=$SECRET_KEY" >> "$REDASH_BASE_PATH"/env
+        echo "REDASH_SECRET_KEY added to env file"
+      fi
+
+      POSTGRES_PASSWORD=
+      POSTGRES_PASSWORD=$(. "$REDASH_BASE_PATH"/env && echo "$POSTGRES_PASSWORD")
+      if [ -z "$POSTGRES_PASSWORD" ]; then
+        POSTGRES_PASSWORD=$PG_PASSWORD
+        echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> "$REDASH_BASE_PATH"/env
+        echo "POSTGRES_PASSWORD added to env file"
+      fi
+
+      REDASH_DATABASE_URL=
+      REDASH_DATABASE_URL=$(. "$REDASH_BASE_PATH"/env && echo "$REDASH_DATABASE_URL")
+      if [ -z "$REDASH_DATABASE_URL" ]; then
+        echo "REDASH_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres/postgres" >> "$REDASH_BASE_PATH"/env
+        echo "REDASH_DATABASE_URL added to env file"
+      fi
+
+      echo
+      return
+    fi
+
+    # Remove existing environment file
+    rm -f "$REDASH_BASE_PATH"/env
+  fi
+
+  echo "Generating brand new environment file"
 
   cat <<EOF >"$REDASH_BASE_PATH"/env
 PYTHONUNBUFFERED=0
 REDASH_LOG_LEVEL=INFO
 REDASH_REDIS_URL=redis://redis:6379/0
-POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 REDASH_COOKIE_SECRET=$COOKIE_SECRET
 REDASH_SECRET_KEY=$SECRET_KEY
-REDASH_DATABASE_URL=$REDASH_DATABASE_URL
+POSTGRES_PASSWORD=$PG_PASSWORD
+REDASH_DATABASE_URL=$DATABASE_URL
 EOF
 }
 
@@ -142,7 +205,7 @@ setup_compose() {
   export COMPOSE_PROJECT_NAME=redash
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
 
-  echo "** Initialising fresh Redash database **"
+  echo "** Initialising Redash database **"
   docker compose run --rm server create_db
 
   echo

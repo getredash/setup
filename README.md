@@ -21,6 +21,35 @@ to manually setup Redash in a different environment (different OS or different d
 - Rocky Linux 8.x & 9.x
 - Ubuntu LTS 20.04 & 22.04
 
+## How to use this
+
+This script should be run as the `root` user on a supported Linux system (as per above list):
+
+```
+# ./setup.sh
+```
+
+When run, the script will install the needed packages (mostly Docker) then install Redash, ready for you to configure
+and begin using.
+
+> [!IMPORTANT]
+> The very first time you load your Redash web interface it can take a while to appear, as the background Python code
+> is being compiled.  On subsequent visits, the pages should load much quicker (near instantly).
+
+## Optional parameters
+
+The setup script has (for now) a single optional parameter, `--overwrite`, used like this:
+
+```
+# ./setup.sh --overwrite
+```
+
+When this option is used, the setup script will delete the existing Redash environment file (`/opt/redash/env`) and
+Redash database, then set up a brand new (empty) Redash installation.
+
+> [!CAUTION]
+> ***DO NOT*** use this parameter if you want to keep your existing Redash installation!  It ***WILL*** be overwritten.
+
 ## FAQ
 
 ### Can I use this in production?
