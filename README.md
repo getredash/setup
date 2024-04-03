@@ -38,14 +38,27 @@ and begin using.
 
 ## Optional parameters
 
-The setup script has (for now) a single optional parameter, `--overwrite`, used like this:
+The setup script has two optional parameters, `--preview` and `--overwrite`.
+
+These can be used independently of each other, or used together.
+
+### --preview
+
+When the `--preview` parameter is given, the setup script will install the latest `preview`
+[image from Docker Hub](https://hub.docker.com/r/redash/redash/tags) instead of using the last official release.
+
+```
+# ./setup.sh --preview
+```
+
+### --overwrite
+
+When the `--overwrite` option is given, the setup script will delete the existing Redash environment file
+(`/opt/redash/env`) and Redash database, then set up a brand new (empty) Redash installation.
 
 ```
 # ./setup.sh --overwrite
 ```
-
-When this option is used, the setup script will delete the existing Redash environment file (`/opt/redash/env`) and
-Redash database, then set up a brand new (empty) Redash installation.
 
 > [!CAUTION]
 > ***DO NOT*** use this parameter if you want to keep your existing Redash installation!  It ***WILL*** be overwritten.
