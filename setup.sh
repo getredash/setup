@@ -5,6 +5,8 @@ set -eu
 
 REDASH_BASE_PATH=/opt/redash
 OVERWRITE=no
+PREVIEW=no
+PORT=5000
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -19,12 +21,38 @@ if [ ! -f /etc/os-release ]; then
   exit
 fi
 
-# Check if the --overwrite option was set
-if [ $# -ne 0 ]; then
-  if [ "x$1" = "x--overwrite" ]; then
-    OVERWRITE=yes
-  fi
-fi
+# Parse any user provided parameters
+opts="$(getopt -o oph -l overwrite,preview,help --name "$0" -- "$@")"
+eval set -- "$opts"
+
+while true
+do
+  case "$1" in
+    -o|--overwrite)
+      OVERWRITE=yes
+      shift
+      ;;
+    -p|--preview)
+      PREVIEW=yes
+      PORT=5001
+      shift
+      ;;
+    -h|--help)
+      echo "Redash setup script usage: $0 [-p|--preview] [-o|--overwrite]"
+      echo "  The --preview option uses the Redash 'preview' Docker image instead of the last stable release"
+      echo "  The --overwrite option replaces any existing configuration with a fresh new install"
+      exit 1
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 install_docker_debian() {
   echo "** Installing Docker (Debian) **"
@@ -114,7 +142,9 @@ create_directories() {
     if [ "x$OVERWRITE" = "xyes" ]; then
       # We've been asked to overwrite the existing database, so delete the old one
       echo "Shutting down any running Redash instance"
-      docker compose -f "$REDASH_BASE_PATH"/compose.yaml down
+      if [ -e "$REDASH_BASE_PATH"/compose.yaml ]; then
+        docker compose -f "$REDASH_BASE_PATH"/compose.yaml down
+      fi
 
       echo "Removing old Redash PG database directory"
       rm -rf "$REDASH_BASE_PATH"/postgres-data
@@ -175,8 +205,8 @@ create_env() {
       return
     fi
 
-    # Remove existing environment file
-    rm -f "$REDASH_BASE_PATH"/env
+    # Move any existing environment file out of the way
+    mv -f "$REDASH_BASE_PATH"/env "$REDASH_BASE_PATH"/env.old
   fi
 
   echo "Generating brand new environment file"
@@ -189,6 +219,8 @@ REDASH_COOKIE_SECRET=$COOKIE_SECRET
 REDASH_SECRET_KEY=$SECRET_KEY
 POSTGRES_PASSWORD=$PG_PASSWORD
 REDASH_DATABASE_URL=$DATABASE_URL
+REDASH_ENFORCE_CSRF=true
+REDASH_GUNICORN_TIMEOUT=60
 EOF
 }
 
@@ -197,13 +229,19 @@ setup_compose() {
 
   cd "$REDASH_BASE_PATH"
   GIT_BRANCH="${REDASH_BRANCH:-master}" # Default branch/version to master if not specified in REDASH_BRANCH env var
+  if [ "x$OVERWRITE" = "xyes" ]; then
+    mv -f compose.yaml compose.yaml.old
+  fi
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/data/compose.yaml
-  curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/redash_make_default.sh
-  sed -i "s|__BASE_PATH__|${REDASH_BASE_PATH}|" redash_make_default.sh
-  sed -i "s|__TARGET_FILE__|$1|" redash_make_default.sh
-  chmod +x redash_make_default.sh
-  export COMPOSE_PROJECT_NAME=redash
+  TAG="10.1.0.b50633"
+  if [ "x$PREVIEW" = "xyes" ]; then
+    TAG="preview"
+  fi
+  sed -i "s|__TAG__|$TAG|" compose.yaml
+  # The preview image uses a different port to access the web interface
+  sed -i "s|__PORT__|$PORT|" compose.yaml
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
+  export COMPOSE_PROJECT_NAME=redash
 
   echo "** Initialising Redash database **"
   docker compose run --rm server create_db
@@ -213,6 +251,15 @@ setup_compose() {
   echo "** Starting Redash **"
   echo "*********************"
   docker compose up -d
+}
+
+setup_make_default() {
+  echo "** Creating redash_make_default.sh script **"
+
+  curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/redash_make_default.sh
+  sed -i "s|__COMPOSE_FILE__|$COMPOSE_FILE|" redash_make_default.sh
+  sed -i "s|__TARGET_FILE__|$PROFILE|" redash_make_default.sh
+  chmod +x redash_make_default.sh
 }
 
 echo
@@ -245,10 +292,11 @@ esac
 # Do the things that aren't distro specific
 create_directories
 create_env
-setup_compose "$PROFILE"
+setup_compose
+setup_make_default
 
 echo
-echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
+echo "Redash has been installed and is ready for configuring at http://$(hostname -f):$PORT"
 echo
 
 echo "If you want Redash to be your default Docker Compose project when you login to this server"

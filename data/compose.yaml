@@ -1,5 +1,5 @@
 x-redash-service: &redash-service
-  image: redash/redash:10.1.0.b50633
+  image: redash/redash:__TAG__
   depends_on:
     - postgres
     - redis
@@ -10,21 +10,27 @@ services:
     <<: *redash-service
     command: server
     ports:
-      - "5000:5000"
+      - "__PORT__:5000"
     environment:
       REDASH_WEB_WORKERS: 4
   scheduler:
     <<: *redash-service
     command: scheduler
+    depends_on:
+      - server
   scheduled_worker:
     <<: *redash-service
     command: worker
+    depends_on:
+      - server
     environment:
       QUEUES: "scheduled_queries,schemas"
       WORKERS_COUNT: 1
   adhoc_worker:
     <<: *redash-service
     command: worker
+    depends_on:
+      - server
     environment:
       QUEUES: "queries"
       WORKERS_COUNT: 2
@@ -50,5 +56,5 @@ services:
     <<: *redash-service
     command: worker
     environment:
-      QUEUES: "periodic emails default"
+      QUEUES: "periodic,emails,default"
       WORKERS_COUNT: 1
