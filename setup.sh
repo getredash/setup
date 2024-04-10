@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-# This script sets up dockerized Redash on Debian 12.x, Ubuntu LTS 20.04 & 22.04, and RHEL (and compatible) 8.x & 9.x
+# This script sets up dockerized Redash on Debian 12.x, Fedora 38 or later, Ubuntu LTS 20.04 & 22.04, and RHEL (and compatible) 8.x & 9.x
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
@@ -17,7 +17,7 @@ fi
 
 # Ensure the script is running on something it can work with
 if [ ! -f /etc/os-release ]; then
-  echo "Unknown Linux distribution.  This script presently works only on Debian, Ubuntu, and RHEL (and compatible)"
+  echo "Unknown Linux distribution.  This script presently works only on Debian, Fedora, Ubuntu, and RHEL (and compatible)"
   exit
 fi
 
@@ -74,6 +74,20 @@ install_docker_debian() {
 deb [arch=""$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable
 EOF
   apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_fedora() {
+  echo "** Installing Docker (Fedora) **"
+
+  # Add Docker package repository
+  dnf -qy install dnf-plugins-core
+  dnf config-manager --quiet --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+  # Install Docker
+  dnf install -qy docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin pwgen
+
+  # Start Docker and enable it for automatic start at boot
+  systemctl start docker && systemctl enable docker
 }
 
 install_docker_rhel() {
@@ -273,6 +287,9 @@ case "$DISTRO" in
 debian)
   install_docker_debian
   ;;
+fedora)
+  install_docker_fedora
+  ;;
 ubuntu)
   install_docker_ubuntu
   ;;
@@ -281,7 +298,7 @@ almalinux|centos|ol|rhel|rocky)
   install_docker_rhel
   ;;
 *)
-  echo "This doesn't seem to be a Debian, Ubuntu, nor RHEL (compatible) system, so this script doesn't know how to add Docker to it."
+  echo "This doesn't seem to be a Debian, Fedora, Ubuntu, nor RHEL (compatible) system, so this script doesn't know how to add Docker to it."
   echo
   echo "Please contact the Redash project via GitHub and ask about getting support added, or add it yourself and let us know. :)"
   echo
