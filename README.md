@@ -16,7 +16,7 @@ to manually setup Redash in a different environment (different OS or different d
 - Alma Linux 8.x & 9.x
 - CentOS Stream 9.x
 - Debian 12.x
-- Fedora 39
+- Fedora 38, 39 & 40
 - Oracle Linux 9.x
 - Red Hat Enterprise Linux 8.x & 9.x
 - Rocky Linux 8.x & 9.x
@@ -85,7 +85,7 @@ The `install_docker_*()` functions in setup.sh shouldn't be too hard to adapt to
 
 ### How do I remove Redash if I no longer need it?
 
-1. Stop the Redash container and remove the images using `docker compose down --volumes --rmi all`.
+1. Stop the Redash containers and remove the images using `docker compose -f /opt/redash/compose.yaml down --volumes --rmi all`.
 2. Remove the following lines from `~/.profile` and `~/.bashrc` if they're present.
 
    ```
