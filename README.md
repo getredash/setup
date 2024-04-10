@@ -16,6 +16,7 @@ to manually setup Redash in a different environment (different OS or different d
 - Alma Linux 8.x & 9.x
 - CentOS Stream 9.x
 - Debian 12.x
+- Fedora 39
 - Oracle Linux 9.x
 - Red Hat Enterprise Linux 8.x & 9.x
 - Rocky Linux 8.x & 9.x
