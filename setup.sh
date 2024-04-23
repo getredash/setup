@@ -4,6 +4,7 @@
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
+AUTOSTART=yes
 OVERWRITE=no
 PREVIEW=no
 PORT=5000
@@ -22,12 +23,16 @@ if [ ! -f /etc/os-release ]; then
 fi
 
 # Parse any user provided parameters
-opts="$(getopt -o oph -l overwrite,preview,help --name "$0" -- "$@")"
+opts="$(getopt -o oph -l dont-start,overwrite,preview,help --name "$0" -- "$@")"
 eval set -- "$opts"
 
 while true
 do
   case "$1" in
+    -d|--dont-start)
+      AUTOSTART=no
+      shift
+      ;;
     -o|--overwrite)
       OVERWRITE=yes
       shift
@@ -38,9 +43,10 @@ do
       shift
       ;;
     -h|--help)
-      echo "Redash setup script usage: $0 [-p|--preview] [-o|--overwrite]"
-      echo "  The --preview option uses the Redash 'preview' Docker image instead of the last stable release"
-      echo "  The --overwrite option replaces any existing configuration with a fresh new install"
+      echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-o|--overwrite]"
+      echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
+      echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
+      echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
       exit 1
       ;;
     --)
@@ -256,15 +262,6 @@ setup_compose() {
   sed -i "s|__PORT__|$PORT|" compose.yaml
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
   export COMPOSE_PROJECT_NAME=redash
-
-  echo "** Initialising Redash database **"
-  docker compose run --rm server create_db
-
-  echo
-  echo "*********************"
-  echo "** Starting Redash **"
-  echo "*********************"
-  docker compose up -d
 }
 
 setup_make_default() {
@@ -274,6 +271,30 @@ setup_make_default() {
   sed -i "s|__COMPOSE_FILE__|$COMPOSE_FILE|" redash_make_default.sh
   sed -i "s|__TARGET_FILE__|$PROFILE|" redash_make_default.sh
   chmod +x redash_make_default.sh
+}
+
+startup() {
+  if [ "x$AUTOSTART" = "xyes" ]; then
+    echo
+    echo "*********************"
+    echo "** Starting Redash **"
+    echo "*********************"
+    echo "** Initialising Redash database **"
+    docker compose run --rm server create_db
+
+    echo "** Starting the rest of Redash **"
+    docker compose up -d
+
+    echo
+    echo "Redash has been installed and is ready for configuring at http://$(hostname -f):$PORT"
+    echo
+  else
+    echo
+    echo "*************************************************************"
+    echo "** As requested, Redash has been installed but NOT started **"
+    echo "*************************************************************"
+    echo
+  fi
 }
 
 echo
@@ -311,10 +332,7 @@ create_directories
 create_env
 setup_compose
 setup_make_default
-
-echo
-echo "Redash has been installed and is ready for configuring at http://$(hostname -f):$PORT"
-echo
+startup
 
 echo "If you want Redash to be your default Docker Compose project when you login to this server"
 echo "in future, then please run $REDASH_BASE_PATH/redash_make_default.sh"
