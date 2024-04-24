@@ -4,7 +4,7 @@
 set -eu
 
 REDASH_BASE_PATH=/opt/redash
-AUTOSTART=yes
+DONT_START=no
 OVERWRITE=no
 PREVIEW=no
 PORT=5000
@@ -30,7 +30,7 @@ while true
 do
   case "$1" in
     -d|--dont-start)
-      AUTOSTART=no
+      DONT_START=yes
       shift
       ;;
     -o|--overwrite)
@@ -274,7 +274,7 @@ setup_make_default() {
 }
 
 startup() {
-  if [ "x$AUTOSTART" = "xyes" ]; then
+  if [ "x$DONT_START" != "xyes" ]; then
     echo
     echo "*********************"
     echo "** Starting Redash **"
