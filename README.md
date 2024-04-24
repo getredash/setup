@@ -39,9 +39,9 @@ and begin using.
 
 ## Optional parameters
 
-The setup script has two optional parameters, `--preview` and `--overwrite`.
+The setup script has three optional parameters, `--dont-start`, `--preview` and `--overwrite`.
 
-These can be used independently of each other, or used together.
+These can be used independently of each other, or with each other in any combination.
 
 ### --preview
 
@@ -54,6 +54,9 @@ When the `--preview` parameter is given, the setup script will install the lates
 
 ### --overwrite
 
+> [!CAUTION]
+> ***DO NOT*** use this parameter if you want to keep your existing Redash installation!  It ***WILL*** be overwritten.
+
 When the `--overwrite` option is given, the setup script will delete the existing Redash environment file
 (`/opt/redash/env`) and Redash database, then set up a brand new (empty) Redash installation.
 
@@ -61,8 +64,15 @@ When the `--overwrite` option is given, the setup script will delete the existin
 # ./setup.sh --overwrite
 ```
 
-> [!CAUTION]
-> ***DO NOT*** use this parameter if you want to keep your existing Redash installation!  It ***WILL*** be overwritten.
+### --dont-start
+
+When this option is given, the setup script will install Redash without starting it afterwards.
+
+This is useful for people wanting to customise or modify their Redash installation before it starts for the first time.
+
+```
+# ./setup.sh --dont-start
+```
 
 ## FAQ
 
