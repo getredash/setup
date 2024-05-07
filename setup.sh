@@ -23,7 +23,7 @@ if [ ! -f /etc/os-release ]; then
 fi
 
 # Parse any user provided parameters
-opts="$(getopt -o oph -l dont-start,overwrite,preview,help --name "$0" -- "$@")"
+opts="$(getopt -o doph -l dont-start,overwrite,preview,help --name "$0" -- "$@")"
 eval set -- "$opts"
 
 while true
