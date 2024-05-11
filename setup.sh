@@ -264,7 +264,7 @@ setup_compose() {
   export COMPOSE_PROJECT_NAME=redash
 }
 
-setup_make_default() {
+create_make_default() {
   echo "** Creating redash_make_default.sh script **"
 
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/redash_make_default.sh
@@ -331,7 +331,7 @@ esac
 create_directories
 create_env
 setup_compose
-setup_make_default
+create_make_default
 startup
 
 echo "If you want Redash to be your default Docker Compose project when you login to this server"
