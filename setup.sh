@@ -18,9 +18,9 @@ fi
 
 # Ensure the 'docker' and 'docker-compose' commands are available
 # and if not, ensure the script can install them
-
 SKIP_DOCKER_INSTALL=no
 if [ -x "$(command -v docker)" ]; then
+  # The first condition is 'docker-compose (v1)' and the second is 'docker compose (v2)'.
   if [ -x "$(command -v docker-compose)" ] || (docker compose 1> /dev/null 2>& 1 && [ $? -eq 0 ]); then
     SKIP_DOCKER_INSTALL=yes
   fi
