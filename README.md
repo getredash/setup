@@ -33,6 +33,10 @@ This script should be run as the `root` user on a supported Linux system (as per
 When run, the script will install the needed packages (mostly Docker) then install Redash, ready for you to configure
 and begin using.
 
+> [!TIP]
+> If you are not on a supported Linux system, you can manually install 'docker' and 'docker compose',  
+> then run the script to start the Redash installation process.
+
 > [!IMPORTANT]
 > The very first time you load your Redash web interface it can take a while to appear, as the background Python code
 > is being compiled.  On subsequent visits, the pages should load much quicker (near instantly).

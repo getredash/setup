@@ -16,8 +16,15 @@ if [ "0$ID" -ne 0 ]
   exit
 fi
 
-# Ensure the script is running on something it can work with
-if [ ! -f /etc/os-release ]; then
+# Ensure the 'docker' and 'docker-compose' commands are available
+# and if not, ensure the script can install them
+SKIP_DOCKER_INSTALL=no
+if [ -x "$(command -v docker)" ]; then
+  # The first condition is 'docker-compose (v1)' and the second is 'docker compose (v2)'.
+  if [ -x "$(command -v docker-compose)" ] || (docker compose 1> /dev/null 2>& 1 && [ $? -eq 0 ]); then
+    SKIP_DOCKER_INSTALL=yes
+  fi
+elif [ ! -f /etc/os-release ]; then
   echo "Unknown Linux distribution.  This script presently works only on Debian, Fedora, Ubuntu, and RHEL (and compatible)"
   exit
 fi
@@ -302,30 +309,34 @@ echo "Redash installation script. :)"
 echo
 
 # Run the distro specific Docker installation
-DISTRO=$(. /etc/os-release && echo "$ID")
-PROFILE=.profile
-case "$DISTRO" in
-debian)
-  install_docker_debian
-  ;;
-fedora)
-  install_docker_fedora
-  ;;
-ubuntu)
-  install_docker_ubuntu
-  ;;
-almalinux|centos|ol|rhel|rocky)
-  PROFILE=.bashrc
-  install_docker_rhel
-  ;;
-*)
-  echo "This doesn't seem to be a Debian, Fedora, Ubuntu, nor RHEL (compatible) system, so this script doesn't know how to add Docker to it."
-  echo
-  echo "Please contact the Redash project via GitHub and ask about getting support added, or add it yourself and let us know. :)"
-  echo
-  exit
-  ;;
-esac
+if [ "$SKIP_DOCKER_INSTALL" = "yes" ]; then
+  echo "Docker and Docker Compose are already installed, so skipping that step."
+else
+  DISTRO=$(. /etc/os-release && echo "$ID")
+  PROFILE=.profile
+  case "$DISTRO" in
+  debian)
+    install_docker_debian
+    ;;
+  fedora)
+    install_docker_fedora
+    ;;
+  ubuntu)
+    install_docker_ubuntu
+    ;;
+  almalinux|centos|ol|rhel|rocky)
+    PROFILE=.bashrc
+    install_docker_rhel
+    ;;
+  *)
+    echo "This doesn't seem to be a Debian, Fedora, Ubuntu, nor RHEL (compatible) system, so this script doesn't know how to add Docker to it."
+    echo
+    echo "Please contact the Redash project via GitHub and ask about getting support added, or add it yourself and let us know. :)"
+    echo
+    exit
+    ;;
+  esac
+fi
 
 # Do the things that aren't distro specific
 create_directories
