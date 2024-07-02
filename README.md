@@ -34,7 +34,7 @@ When run, the script will install the needed packages (mostly Docker) then insta
 and begin using.
 
 > [!TIP]
-> If you are not on a supported Linux system, you can manually install the 'docker' and 'docker compose',  
+> If you are not on a supported Linux system, you can manually install 'docker' and 'docker compose',  
 > then run the script to start the Redash installation process.
 
 > [!IMPORTANT]
