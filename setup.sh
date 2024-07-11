@@ -309,11 +309,11 @@ echo "Redash installation script. :)"
 echo
 
 # Run the distro specific Docker installation
+PROFILE=.profile
 if [ "$SKIP_DOCKER_INSTALL" = "yes" ]; then
   echo "Docker and Docker Compose are already installed, so skipping that step."
 else
   DISTRO=$(. /etc/os-release && echo "$ID")
-  PROFILE=.profile
   case "$DISTRO" in
   debian)
     install_docker_debian
