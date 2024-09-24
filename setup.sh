@@ -233,7 +233,8 @@ create_env() {
     fi
 
     # Move any existing environment file out of the way
-    mv -f "$REDASH_BASE_PATH"/env "$REDASH_BASE_PATH"/env.old
+    TIMESTAMP_NOW=$(date +'%Y.%m.%d-%H.%M')
+    mv -f "${REDASH_BASE_PATH}/env" "${REDASH_BASE_PATH}/env.old.${TIMESTAMP_NOW}"
   fi
 
   echo "Generating brand new environment file"
