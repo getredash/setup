@@ -233,7 +233,6 @@ create_env() {
     fi
 
     # Move any existing environment file out of the way
-    TIMESTAMP_NOW=$(date +'%Y.%m.%d-%H.%M')
     mv -f "${REDASH_BASE_PATH}/env" "${REDASH_BASE_PATH}/env.old-${TIMESTAMP_NOW}"
   fi
 
@@ -258,7 +257,7 @@ setup_compose() {
   cd "$REDASH_BASE_PATH"
   GIT_BRANCH="${REDASH_BRANCH:-master}" # Default branch/version to master if not specified in REDASH_BRANCH env var
   if [ "x$OVERWRITE" = "xyes" -a -e compose.yaml ]; then
-    mv -f compose.yaml compose.yaml.old
+    mv -f compose.yaml compose.yaml.old-${TIMESTAMP_NOW}
   fi
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/data/compose.yaml
   TAG="10.1.0.b50633"
@@ -308,6 +307,8 @@ startup() {
 echo
 echo "Redash installation script. :)"
 echo
+
+TIMESTAMP_NOW=$(date +'%Y.%m.%d-%H.%M')
 
 # Run the distro specific Docker installation
 PROFILE=.profile
