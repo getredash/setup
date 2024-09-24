@@ -7,7 +7,6 @@ REDASH_BASE_PATH=/opt/redash
 DONT_START=no
 OVERWRITE=no
 PREVIEW=no
-PORT=5000
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -46,7 +45,6 @@ do
       ;;
     -p|--preview)
       PREVIEW=yes
-      PORT=5001
       shift
       ;;
     -h|--help)
@@ -265,8 +263,6 @@ setup_compose() {
     TAG="preview"
   fi
   sed -i "s|__TAG__|$TAG|" compose.yaml
-  # The preview image uses a different port to access the web interface
-  sed -i "s|__PORT__|$PORT|" compose.yaml
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
   export COMPOSE_PROJECT_NAME=redash
 }
@@ -293,7 +289,7 @@ startup() {
     docker compose up -d
 
     echo
-    echo "Redash has been installed and is ready for configuring at http://$(hostname -f):$PORT"
+    echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
     echo
   else
     echo

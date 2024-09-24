@@ -10,7 +10,7 @@ services:
     <<: *redash-service
     command: server
     ports:
-      - "__PORT__:5000"
+      - "5000:5000"
     environment:
       REDASH_WEB_WORKERS: 4
   scheduler:
