@@ -167,14 +167,14 @@ create_directories() {
     # PostgreSQL database directory seems to exist already
 
     if [ "x$OVERWRITE" = "xyes" ]; then
-      # We've been asked to overwrite the existing database, so delete the old one
+      # We've been asked to overwrite the existing database
       echo "Shutting down any running Redash instance"
       if [ -e "$REDASH_BASE_PATH"/compose.yaml ]; then
         docker compose -f "$REDASH_BASE_PATH"/compose.yaml down
       fi
 
-      echo "Removing old Redash PG database directory"
-      rm -rf "$REDASH_BASE_PATH"/postgres-data
+      echo "Moving old Redash PG database directory out of the way"
+      mv "${REDASH_BASE_PATH}/postgres-data" "${REDASH_BASE_PATH}/postgres-data-${TIMESTAMP_NOW}"
       mkdir "$REDASH_BASE_PATH"/postgres-data
     fi
   else
