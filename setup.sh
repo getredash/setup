@@ -165,14 +165,14 @@ create_directories() {
     # PostgreSQL database directory seems to exist already
 
     if [ "x$OVERWRITE" = "xyes" ]; then
-      # We've been asked to overwrite the existing database, so delete the old one
+      # We've been asked to overwrite the existing database
       echo "Shutting down any running Redash instance"
       if [ -e "$REDASH_BASE_PATH"/compose.yaml ]; then
         docker compose -f "$REDASH_BASE_PATH"/compose.yaml down
       fi
 
-      echo "Removing old Redash PG database directory"
-      rm -rf "$REDASH_BASE_PATH"/postgres-data
+      echo "Moving old Redash PG database directory out of the way"
+      mv "${REDASH_BASE_PATH}/postgres-data" "${REDASH_BASE_PATH}/postgres-data-${TIMESTAMP_NOW}"
       mkdir "$REDASH_BASE_PATH"/postgres-data
     fi
   else
@@ -231,7 +231,7 @@ create_env() {
     fi
 
     # Move any existing environment file out of the way
-    mv -f "$REDASH_BASE_PATH"/env "$REDASH_BASE_PATH"/env.old
+    mv -f "${REDASH_BASE_PATH}/env" "${REDASH_BASE_PATH}/env.old-${TIMESTAMP_NOW}"
   fi
 
   echo "Generating brand new environment file"
@@ -254,8 +254,8 @@ setup_compose() {
 
   cd "$REDASH_BASE_PATH"
   GIT_BRANCH="${REDASH_BRANCH:-master}" # Default branch/version to master if not specified in REDASH_BRANCH env var
-  if [ "x$OVERWRITE" = "xyes" ]; then
-    mv -f compose.yaml compose.yaml.old
+  if [ "x$OVERWRITE" = "xyes" -a -e compose.yaml ]; then
+    mv -f compose.yaml compose.yaml.old-${TIMESTAMP_NOW}
   fi
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/data/compose.yaml
   TAG="10.1.0.b50633"
@@ -303,6 +303,8 @@ startup() {
 echo
 echo "Redash installation script. :)"
 echo
+
+TIMESTAMP_NOW=$(date +'%Y.%m.%d-%H.%M')
 
 # Run the distro specific Docker installation
 PROFILE=.profile
