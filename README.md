@@ -43,18 +43,35 @@ and begin using.
 
 ## Optional parameters
 
-The setup script has three optional parameters, `--dont-start`, `--preview` and `--overwrite`.
+The setup script has the following optional parameters: `--dont-start`, `--preview`, `--version`, and `--overwrite`.
 
-These can be used independently of each other, or with each other in any combination.
+These can be used independently of each other, or in combinations (with the exception that `--preview` and `--version` cannot be used together).
 
 ### --preview
 
-When the `--preview` parameter is given, the setup script will install the latest `preview`
-[image from Docker Hub](https://hub.docker.com/r/redash/redash/tags) instead of using the last official release.
+When the `--preview` parameter is given, the setup script will install the latest `preview` 
+[image from Docker Hub](https://hub.docker.com/r/redash/redash/tags) instead of using the latest preview release.
 
 ```
 # ./setup.sh --preview
 ```
+
+### --version
+
+When the `--version` parameter is given, the setup script will install the specified version of Redash instead of the latest stable release.
+
+```
+# ./setup.sh --version 25.1.0
+```
+
+This option allows you to install a specific version of Redash, which can be useful for testing, compatibility checks, or ensuring reproducible environments.
+
+> [!NOTE]
+> The `--version` and `--preview` options cannot be used together.
+
+### Default Behavior
+
+When neither `--preview` nor `--version` is specified, the script will automatically detect and install the latest stable release of Redash using the GitHub API.
 
 ### --overwrite
 

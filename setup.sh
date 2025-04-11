@@ -7,6 +7,7 @@ REDASH_BASE_PATH=/opt/redash
 DONT_START=no
 OVERWRITE=no
 PREVIEW=no
+REDASH_VERSION=""
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -29,7 +30,7 @@ elif [ ! -f /etc/os-release ]; then
 fi
 
 # Parse any user provided parameters
-opts="$(getopt -o doph -l dont-start,overwrite,preview,help --name "$0" -- "$@")"
+opts="$(getopt -o doph -l dont-start,overwrite,preview,help,version: --name "$0" -- "$@")"
 eval set -- "$opts"
 
 while true
@@ -47,9 +48,14 @@ do
       PREVIEW=yes
       shift
       ;;
+    --version)
+      REDASH_VERSION="$2"
+      shift 2
+      ;;
     -h|--help)
-      echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-o|--overwrite]"
+      echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-o|--overwrite] [--version <tag>]"
       echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
+      echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
       echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
       echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
       exit 1
@@ -258,10 +264,35 @@ setup_compose() {
     mv -f compose.yaml compose.yaml.old-${TIMESTAMP_NOW}
   fi
   curl -fsSOL https://raw.githubusercontent.com/getredash/setup/"$GIT_BRANCH"/data/compose.yaml
-  TAG="10.1.0.b50633"
+  
+  # Check for conflicts between --version and --preview options
+  if [ "x$PREVIEW" = "xyes" ] && [ -n "$REDASH_VERSION" ]; then
+    echo "Error: Cannot specify both --preview and --version options"
+    exit 1
+  fi
+  
+  # Set TAG based on provided options
   if [ "x$PREVIEW" = "xyes" ]; then
     TAG="preview"
+    echo "** Using preview version of Redash **"
+  elif [ -n "$REDASH_VERSION" ]; then
+    TAG="$REDASH_VERSION"
+    echo "** Using specified Redash version: $TAG **"
+  else
+    # Get the latest stable version from GitHub API
+    echo "** Fetching latest stable Redash version **"
+    LATEST_TAG=$(curl -s https://api.github.com/repos/getredash/redash/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+    if [ -n "$LATEST_TAG" ]; then
+      # Remove 'v' prefix if present (GitHub tags use 'v', Docker tags don't)
+      TAG=$(echo "$LATEST_TAG" | sed 's/^v//')
+      echo "** Using latest stable Redash version: $TAG **"
+    else
+      # Fallback to hardcoded version if API call fails
+      TAG="latest"
+      echo "** Warning: Failed to fetch latest version, using fallback version: $TAG **"
+    fi
   fi
+  
   sed -i "s|__TAG__|$TAG|" compose.yaml
   export COMPOSE_FILE="$REDASH_BASE_PATH"/compose.yaml
   export COMPOSE_PROJECT_NAME=redash
