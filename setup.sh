@@ -369,21 +369,21 @@ fi
 
 # Ensure pwgen is available (needed for generating secrets)
 if ! command -v pwgen >/dev/null 2>&1; then
-  echo "** Installing pwgen **"
-  if [ -f /etc/debian_version ]; then
-    apt-get update -qq
-    apt-get install -y pwgen
-  elif [ -f /etc/redhat-release ]; then
-    if command -v dnf >/dev/null 2>&1; then
-      dnf install -y pwgen
-    else
-      yum install -y pwgen
-    fi
-  else
-    echo "Warning: pwgen not found and unable to install automatically on this system."
-    echo "Please install pwgen manually: sudo apt-get install pwgen (Debian/Ubuntu) or sudo yum install pwgen (RHEL/CentOS)"
-    exit 1
-  fi
+	echo "** Installing pwgen **"
+	if [ -f /etc/debian_version ]; then
+		apt-get update -qq
+		apt-get install -y pwgen
+	elif [ -f /etc/redhat-release ]; then
+		if command -v dnf >/dev/null 2>&1; then
+			dnf install -y pwgen
+		else
+			yum install -y pwgen
+		fi
+	else
+		echo "Warning: pwgen not found and unable to install automatically on this system."
+		echo "Please install pwgen manually: sudo apt-get install pwgen (Debian/Ubuntu) or sudo yum install pwgen (RHEL/CentOS)"
+		exit 1
+	fi
 fi
 
 # Do the things that aren't distro specific
