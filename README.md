@@ -61,7 +61,7 @@ When the `--preview` parameter is given, the setup script will install the lates
 When the `--version` parameter is given, the setup script will install the specified version of Redash instead of the latest stable release.
 
 ```
-# ./setup.sh --version 25.1.0
+# ./setup.sh --version 25.8.0
 ```
 
 This option allows you to install a specific version of Redash, which can be useful for testing, compatibility checks, or ensuring reproducible environments.
