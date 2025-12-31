@@ -8,6 +8,49 @@ DONT_START=no
 OVERWRITE=no
 PREVIEW=no
 REDASH_VERSION=""
+DEBUG=no
+SCRIPT_NAME="$0"
+
+# Error handling function
+handle_error() {
+	if [ "x$DEBUG" != "xyes" ]; then
+		echo
+		echo "❌ An error occurred during installation."
+		echo "💡 For detailed output, please run: $SCRIPT_NAME --debug"
+		echo
+	fi
+	exit 1
+}
+
+# Background process with progress dots
+run_with_progress() {
+	RWP_MESSAGE="$1"
+	RWP_COMMAND="$2"
+	
+	echo -n "$RWP_MESSAGE"
+	ERROR_LOG=$(mktemp)
+	eval "$RWP_COMMAND" >/dev/null 2>"$ERROR_LOG" &
+	PID=$!
+	trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
+	while kill -0 "$PID" 2>/dev/null; do
+		echo -n "."
+		sleep 2
+	done
+	wait "$PID"
+	STATUS=$?
+	trap - EXIT INT TERM
+	if [ "$STATUS" -ne 0 ]; then
+		echo " Failed!"
+		if [ -s "$ERROR_LOG" ]; then
+			echo "Error details:"
+			cat "$ERROR_LOG"
+		fi
+		rm -f "$ERROR_LOG"
+		handle_error
+	fi
+	rm -f "$ERROR_LOG"
+	echo " Done!"
+}
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -30,7 +73,7 @@ elif [ ! -f /etc/os-release ]; then
 fi
 
 # Parse any user provided parameters
-opts="$(getopt -o doph -l dont-start,overwrite,preview,help,version: --name "$0" -- "$@")"
+opts="$(getopt -o dophg -l dont-start,overwrite,preview,help,debug,version: --name "$0" -- "$@")"
 eval set -- "$opts"
 
 while true; do
@@ -47,16 +90,21 @@ while true; do
 		PREVIEW=yes
 		shift
 		;;
+	-g | --debug)
+		DEBUG=yes
+		shift
+		;;
 	--version)
 		REDASH_VERSION="$2"
 		shift 2
 		;;
 	-h | --help)
-		echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-o|--overwrite] [--version <tag>]"
-		echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
-		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
-		echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
+		echo "Redash setup script usage: $SCRIPT_NAME [-d|--dont-start] [-p|--preview] [-g|--debug] [-o|--overwrite] [--version <tag>]"
 		echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
+		echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
+		echo "  The --debug (also -g) option shows detailed Docker progress output instead of clean progress dots"
+		echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
+		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
 		exit 1
 		;;
 	--)
@@ -313,10 +361,29 @@ startup() {
 		echo "** Starting Redash **"
 		echo "*********************"
 		echo "** Initialising Redash database **"
-		docker compose run --rm server create_db
+		if [ "x$DEBUG" = "xyes" ]; then
+			docker compose run --rm server create_db || handle_error
+		else
+			run_with_progress "Downloading images" "docker compose pull"
+			run_with_progress "Creating database" "docker compose run --rm server create_db"
+		fi
 
 		echo "** Starting the rest of Redash **"
-		docker compose up -d
+		if [ "x$DEBUG" = "xyes" ]; then
+			docker compose up -d || handle_error
+		else
+			echo "Starting containers..."
+			ERROR_LOG=$(mktemp)
+			if ! docker compose up -d >/dev/null 2>"$ERROR_LOG"; then
+				if [ -s "$ERROR_LOG" ]; then
+					echo "Error details:"
+					cat "$ERROR_LOG"
+				fi
+				rm -f "$ERROR_LOG"
+				handle_error
+			fi
+			rm -f "$ERROR_LOG"
+		fi
 
 		echo
 		echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
