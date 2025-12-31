@@ -142,7 +142,7 @@ install_docker_ubuntu() {
 	export DEBIAN_FRONTEND=noninteractive
 	apt-get -qqy update
 	DEBIAN_FRONTEND=noninteractive sudo -E apt-get -qqy -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-	apt-get -yy install apt-transport-https ca-certificates curl software-properties-common pwgen gnupg
+	apt-get -yy install apt-transport-https ca-certificates curl pwgen gnupg
 
 	# Add Docker GPG signing key
 	if [ ! -f "/etc/apt/keyrings/docker.gpg" ]; then
