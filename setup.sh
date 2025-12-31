@@ -9,13 +9,14 @@ OVERWRITE=no
 PREVIEW=no
 REDASH_VERSION=""
 DEBUG=no
+SCRIPT_NAME="$0"
 
 # Error handling function
 handle_error() {
 	if [ "x$DEBUG" != "xyes" ]; then
 		echo
 		echo "❌ An error occurred during installation."
-		echo "💡 For detailed output, please run: $0 --debug"
+		echo "💡 For detailed output, please run: $SCRIPT_NAME --debug"
 		echo
 	fi
 	exit 1
@@ -98,12 +99,12 @@ while true; do
 		shift 2
 		;;
 	-h | --help)
-		echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-g|--debug] [-o|--overwrite] [--version <tag>]"
+		echo "Redash setup script usage: $SCRIPT_NAME [-d|--dont-start] [-p|--preview] [-g|--debug] [-o|--overwrite] [--version <tag>]"
+		echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
 		echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
 		echo "  The --debug (also -g) option shows detailed Docker progress output instead of clean progress dots"
-		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
 		echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
-		echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
+		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
 		exit 1
 		;;
 	--)
