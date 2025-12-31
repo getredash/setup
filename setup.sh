@@ -21,6 +21,36 @@ handle_error() {
 	exit 1
 }
 
+# Background process with progress dots
+run_with_progress() {
+	local message="$1"
+	local command="$2"
+	
+	echo -n "$message"
+	ERROR_LOG=$(mktemp)
+	eval "$command" >/dev/null 2>"$ERROR_LOG" &
+	PID=$!
+	trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
+	while kill -0 "$PID" 2>/dev/null; do
+		echo -n "."
+		sleep 2
+	done
+	wait "$PID"
+	STATUS=$?
+	trap - EXIT INT TERM
+	if [ "$STATUS" -ne 0 ]; then
+		echo " Failed!"
+		if [ -s "$ERROR_LOG" ]; then
+			echo "Error details:"
+			cat "$ERROR_LOG"
+		fi
+		rm -f "$ERROR_LOG"
+		handle_error
+	fi
+	rm -f "$ERROR_LOG"
+	echo " Done!"
+}
+
 # Ensure the script is being run as root
 ID=$(id -u)
 if [ "0$ID" -ne 0 ]; then
@@ -333,52 +363,8 @@ startup() {
 		if [ "x$DEBUG" = "xyes" ]; then
 			docker compose run --rm server create_db || handle_error
 		else
-			echo -n "Downloading images"
-			ERROR_LOG=$(mktemp)
-			docker compose pull >/dev/null 2>"$ERROR_LOG" &
-			PID=$!
-			trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
-			while kill -0 "$PID" 2>/dev/null; do
-				echo -n "."
-				sleep 2
-			done
-			wait "$PID"
-			STATUS=$?
-			trap - EXIT INT TERM
-			if [ "$STATUS" -ne 0 ]; then
-				echo " Failed!"
-				if [ -s "$ERROR_LOG" ]; then
-					echo "Error details:"
-					cat "$ERROR_LOG"
-				fi
-				rm -f "$ERROR_LOG"
-				handle_error
-			fi
-			rm -f "$ERROR_LOG"
-			echo " Done!"
-			echo -n "Creating database"
-			ERROR_LOG=$(mktemp)
-			docker compose run --rm server create_db >/dev/null 2>"$ERROR_LOG" &
-			PID=$!
-			trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
-			while kill -0 "$PID" 2>/dev/null; do
-				echo -n "."
-				sleep 2
-			done
-			wait "$PID"
-			STATUS=$?
-			trap - EXIT INT TERM
-			if [ "$STATUS" -ne 0 ]; then
-				echo " Failed!"
-				if [ -s "$ERROR_LOG" ]; then
-					echo "Error details:"
-					cat "$ERROR_LOG"
-				fi
-				rm -f "$ERROR_LOG"
-				handle_error
-			fi
-			rm -f "$ERROR_LOG"
-			echo " Done!"
+			run_with_progress "Downloading images" "docker compose pull"
+			run_with_progress "Creating database" "docker compose run --rm server create_db"
 		fi
 
 		echo "** Starting the rest of Redash **"
