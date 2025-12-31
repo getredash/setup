@@ -10,6 +10,17 @@ PREVIEW=no
 REDASH_VERSION=""
 DEBUG=no
 
+# Error handling function
+handle_error() {
+	if [ "$DEBUG" != "yes" ]; then
+		echo
+		echo "❌ An error occurred during installation."
+		echo "💡 For detailed output, please run: $0 --debug"
+		echo
+	fi
+	exit 1
+}
+
 # Ensure the script is being run as root
 ID=$(id -u)
 if [ "0$ID" -ne 0 ]; then
@@ -320,7 +331,7 @@ startup() {
 		echo "*********************"
 		echo "** Initialising Redash database **"
 		if [ "$DEBUG" = "yes" ]; then
-			docker compose run --rm server create_db
+			docker compose run --rm server create_db || handle_error
 		else
 			echo -n "Downloading images"
 			docker compose pull > /dev/null 2>&1 &
@@ -329,17 +340,21 @@ startup() {
 				echo -n "."
 				sleep 2
 			done
+			wait $PID || {
+				echo " Failed!"
+				handle_error
+			}
 			echo " Done!"
 			echo "Creating database..."
-			docker compose run --rm server create_db
+			docker compose run --rm server create_db || handle_error
 		fi
 
 		echo "** Starting the rest of Redash **"
 		if [ "$DEBUG" = "yes" ]; then
-			docker compose up -d
+			docker compose up -d || handle_error
 		else
 			echo "Starting containers..."
-			docker compose up -d
+			docker compose up -d || handle_error
 		fi
 
 		echo
