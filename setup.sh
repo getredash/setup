@@ -11,6 +11,17 @@ REDASH_VERSION=""
 COMPOSE_WRAPPER_DEFINED=no
 DEBUG=no
 
+# Error handling function
+handle_error() {
+	if [ "$DEBUG" != "yes" ]; then
+		echo
+		echo "❌ An error occurred during installation."
+		echo "💡 For detailed output, please run: $0 --debug"
+		echo
+	fi
+	exit 1
+}
+
 # Ensure the script is being run as root
 ID=$(id -u)
 if [ "0$ID" -ne 0 ]; then
@@ -342,7 +353,7 @@ startup() {
 		echo "*********************"
 		echo "** Initialising Redash database **"
 		if [ "$DEBUG" = "yes" ]; then
-			docker_compose run --rm server create_db
+			docker_compose run --rm server create_db || handle_error
 		else
 			printf "Downloading images"
 			docker_compose pull > /dev/null 2>&1 &
@@ -351,17 +362,21 @@ startup() {
 				printf "."
 				sleep 2
 			done
+			wait $PID || {
+				echo " Failed!"
+				handle_error
+			}
 			echo " Done!"
 			echo "Creating database..."
-			docker_compose run --rm server create_db
+			docker_compose run --rm server create_db || handle_error
 		fi
 
 		echo "** Starting the rest of Redash **"
 		if [ "$DEBUG" = "yes" ]; then
-			docker_compose up -d
+			docker_compose up -d || handle_error
 		else
 			echo "Starting containers..."
-			docker_compose up -d
+			docker_compose up -d || handle_error
 		fi
 
 		echo
