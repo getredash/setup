@@ -386,7 +386,16 @@ startup() {
 			docker compose up -d || handle_error
 		else
 			echo "Starting containers..."
-			docker compose up -d >/dev/null 2>&1 || handle_error
+			ERROR_LOG=$(mktemp)
+			if ! docker compose up -d >/dev/null 2>"$ERROR_LOG"; then
+				if [ -s "$ERROR_LOG" ]; then
+					echo "Error details:"
+					cat "$ERROR_LOG"
+				fi
+				rm -f "$ERROR_LOG"
+				handle_error
+			fi
+			rm -f "$ERROR_LOG"
 		fi
 
 		echo
