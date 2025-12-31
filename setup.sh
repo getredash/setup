@@ -24,12 +24,12 @@ handle_error() {
 
 # Background process with progress dots
 run_with_progress() {
-	local message="$1"
-	local command="$2"
+	RWP_MESSAGE="$1"
+	RWP_COMMAND="$2"
 	
-	echo -n "$message"
+	echo -n "$RWP_MESSAGE"
 	ERROR_LOG=$(mktemp)
-	eval "$command" >/dev/null 2>"$ERROR_LOG" &
+	eval "$RWP_COMMAND" >/dev/null 2>"$ERROR_LOG" &
 	PID=$!
 	trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
 	while kill -0 "$PID" 2>/dev/null; do
