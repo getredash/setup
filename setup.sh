@@ -334,7 +334,7 @@ startup() {
 			docker compose run --rm server create_db || handle_error
 		else
 			echo -n "Downloading images"
-			docker compose pull > /dev/null 2>&1 &
+			docker compose pull >/dev/null 2>&1 &
 			PID=$!
 			while kill -0 $PID 2>/dev/null; do
 				echo -n "."
