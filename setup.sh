@@ -12,7 +12,7 @@ DEBUG=no
 
 # Error handling function
 handle_error() {
-	if [ "$DEBUG" != "yes" ]; then
+	if [ "x$DEBUG" != "xyes" ]; then
 		echo
 		echo "❌ An error occurred during installation."
 		echo "💡 For detailed output, please run: $0 --debug"
@@ -330,31 +330,63 @@ startup() {
 		echo "** Starting Redash **"
 		echo "*********************"
 		echo "** Initialising Redash database **"
-		if [ "$DEBUG" = "yes" ]; then
+		if [ "x$DEBUG" = "xyes" ]; then
 			docker compose run --rm server create_db || handle_error
 		else
 			echo -n "Downloading images"
-			docker compose pull >/dev/null 2>&1 &
+			ERROR_LOG=$(mktemp)
+			docker compose pull >/dev/null 2>"$ERROR_LOG" &
 			PID=$!
-			while kill -0 $PID 2>/dev/null; do
+			trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
+			while kill -0 "$PID" 2>/dev/null; do
 				echo -n "."
 				sleep 2
 			done
-			wait $PID || {
+			wait "$PID"
+			STATUS=$?
+			trap - EXIT INT TERM
+			if [ "$STATUS" -ne 0 ]; then
 				echo " Failed!"
+				if [ -s "$ERROR_LOG" ]; then
+					echo "Error details:"
+					cat "$ERROR_LOG"
+				fi
+				rm -f "$ERROR_LOG"
 				handle_error
-			}
+			fi
+			rm -f "$ERROR_LOG"
 			echo " Done!"
-			echo "Creating database..."
-			docker compose run --rm server create_db || handle_error
+			echo -n "Creating database"
+			ERROR_LOG=$(mktemp)
+			docker compose run --rm server create_db >/dev/null 2>"$ERROR_LOG" &
+			PID=$!
+			trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
+			while kill -0 "$PID" 2>/dev/null; do
+				echo -n "."
+				sleep 2
+			done
+			wait "$PID"
+			STATUS=$?
+			trap - EXIT INT TERM
+			if [ "$STATUS" -ne 0 ]; then
+				echo " Failed!"
+				if [ -s "$ERROR_LOG" ]; then
+					echo "Error details:"
+					cat "$ERROR_LOG"
+				fi
+				rm -f "$ERROR_LOG"
+				handle_error
+			fi
+			rm -f "$ERROR_LOG"
+			echo " Done!"
 		fi
 
 		echo "** Starting the rest of Redash **"
-		if [ "$DEBUG" = "yes" ]; then
+		if [ "x$DEBUG" = "xyes" ]; then
 			docker compose up -d || handle_error
 		else
 			echo "Starting containers..."
-			docker compose up -d || handle_error
+			docker compose up -d >/dev/null 2>&1 || handle_error
 		fi
 
 		echo
