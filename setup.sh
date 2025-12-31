@@ -9,6 +9,7 @@ OVERWRITE=no
 PREVIEW=no
 REDASH_VERSION=""
 COMPOSE_WRAPPER_DEFINED=no
+DEBUG=no
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -52,7 +53,7 @@ elif [ ! -f /etc/os-release ]; then
 fi
 
 # Parse any user provided parameters
-opts="$(getopt -o doph -l dont-start,overwrite,preview,help,version: --name "$0" -- "$@")"
+opts="$(getopt -o dophg -l dont-start,overwrite,preview,help,debug,version: --name "$0" -- "$@")"
 eval set -- "$opts"
 
 while true; do
@@ -69,13 +70,18 @@ while true; do
 		PREVIEW=yes
 		shift
 		;;
+	-g | --debug)
+		DEBUG=yes
+		shift
+		;;
 	--version)
 		REDASH_VERSION="$2"
 		shift 2
 		;;
 	-h | --help)
-		echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-o|--overwrite] [--version <tag>]"
+		echo "Redash setup script usage: $0 [-d|--dont-start] [-p|--preview] [-g|--debug] [-o|--overwrite] [--version <tag>]"
 		echo "  The --preview (also -p) option uses the Redash 'preview' Docker image instead of the last stable release"
+		echo "  The --debug (also -g) option shows detailed Docker progress output instead of clean progress dots"
 		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
 		echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
 		echo "  The --dont-start (also -d) option installs Redash, but doesn't automatically start it afterwards"
@@ -335,10 +341,28 @@ startup() {
 		echo "** Starting Redash **"
 		echo "*********************"
 		echo "** Initialising Redash database **"
-		docker_compose run --rm server create_db
+		if [ "$DEBUG" = "yes" ]; then
+			docker_compose run --rm server create_db
+		else
+			printf "Downloading images"
+			docker_compose pull > /dev/null 2>&1 &
+			PID=$!
+			while kill -0 $PID 2>/dev/null; do
+				printf "."
+				sleep 2
+			done
+			echo " Done!"
+			echo "Creating database..."
+			docker_compose run --rm server create_db
+		fi
 
 		echo "** Starting the rest of Redash **"
-		docker_compose up -d
+		if [ "$DEBUG" = "yes" ]; then
+			docker_compose up -d
+		else
+			echo "Starting containers..."
+			docker_compose up -d
+		fi
 
 		echo
 		echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
