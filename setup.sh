@@ -30,7 +30,7 @@ run_with_progress() {
 	
 	printf "%s" "$RWP_MESSAGE"
 	ERROR_LOG=$(mktemp)
-	eval "$RWP_COMMAND" >/dev/null 2>"$ERROR_LOG" &
+	eval "$RWP_COMMAND" >"$ERROR_LOG" 2>&1 &
 	PID=$!
 	trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
 	while kill -0 "$PID" 2>/dev/null; do
@@ -386,7 +386,6 @@ startup() {
 		if [ "x$DEBUG" = "xyes" ]; then
 			docker_compose run --rm server create_db || handle_error
 		else
-			run_with_progress "Downloading images" "docker_compose pull"
 			run_with_progress "Creating database" "docker_compose run --rm server create_db"
 		fi
 
