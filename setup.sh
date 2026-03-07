@@ -8,6 +8,7 @@ DONT_START=no
 OVERWRITE=no
 PREVIEW=no
 REDASH_VERSION=""
+COMPOSE_WRAPPER_DEFINED=no
 
 # Ensure the script is being run as root
 ID=$(id -u)
@@ -18,28 +19,38 @@ fi
 
 # Ensure the 'docker' and 'docker-compose' commands are available
 # and if not, ensure the script can install them
+# Also detect which Docker Compose command to use and create wrapper function
 SKIP_DOCKER_INSTALL=no
-if [ -x "$(command -v docker)" ]; then
-	# The first condition is 'docker-compose (v1)' and the second is 'docker compose (v2)'.
-	if [ -x "$(command -v docker-compose)" ] || (docker compose 1>/dev/null 2>&1 && [ $? -eq 0 ]); then
-		SKIP_DOCKER_INSTALL=yes
-	fi
-elif [ ! -f /etc/os-release ]; then
-	echo "Unknown Linux distribution.  This script presently works only on Debian, Fedora, Ubuntu, and RHEL (and compatible)"
-	exit
-fi
 
-# Detect the correct Docker Compose command and create wrapper function
-detect_compose_command() {
+# Detect and define docker_compose wrapper function at global scope
+detect_and_define_compose() {
+	if [ "$COMPOSE_WRAPPER_DEFINED" = "yes" ]; then
+		return 0
+	fi
+	
 	if docker compose version >/dev/null 2>&1; then
 		docker_compose() { docker compose "$@"; }
+		COMPOSE_WRAPPER_DEFINED=yes
 	elif command -v docker-compose >/dev/null 2>&1; then
 		docker_compose() { docker-compose "$@"; }
+		COMPOSE_WRAPPER_DEFINED=yes
 	else
-		echo "Error: Neither 'docker compose' nor 'docker-compose' found."
-		exit 1
+		echo "Error: Neither 'docker compose' nor 'docker-compose' found." >&2
+		return 1
 	fi
 }
+
+if command -v docker >/dev/null 2>&1; then
+	# Docker is already installed, detect which compose command to use
+	detect_and_define_compose || {
+		echo "Error: Failed to detect Docker Compose command." >&2
+		exit 1
+	}
+	SKIP_DOCKER_INSTALL=yes
+elif [ ! -f /etc/os-release ]; then
+	echo "Unknown Linux distribution.  This script presently works only on Debian, Fedora, Ubuntu, and RHEL (and compatible)"
+	exit 1
+fi
 
 # Parse any user provided parameters
 opts="$(getopt -o doph -l dont-start,overwrite,preview,help,version: --name "$0" -- "$@")"
@@ -378,8 +389,8 @@ else
 	esac
 fi
 
-# Detect the right Docker Compose command to use
-detect_compose_command
+# Detect the right Docker Compose command to use (after Docker installation if needed)
+detect_and_define_compose
 echo "Using compose command: $(docker_compose version | head -n1)"
 
 # Ensure pwgen is available (needed for generating secrets)
