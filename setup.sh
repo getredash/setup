@@ -29,12 +29,12 @@ elif [ ! -f /etc/os-release ]; then
 	exit
 fi
 
-# Detect the correct Docker Compose command
+# Detect the correct Docker Compose command and create wrapper function
 detect_compose_command() {
 	if docker compose version >/dev/null 2>&1; then
-		DOCKER_COMPOSE="docker compose"
+		docker_compose() { docker compose "$@"; }
 	elif command -v docker-compose >/dev/null 2>&1; then
-		DOCKER_COMPOSE="docker-compose"
+		docker_compose() { docker-compose "$@"; }
 	else
 		echo "Error: Neither 'docker compose' nor 'docker-compose' found."
 		exit 1
@@ -185,7 +185,7 @@ create_directories() {
 			# We've been asked to overwrite the existing database
 			echo "Shutting down any running Redash instance"
 			if [ -e "$REDASH_BASE_PATH"/compose.yaml ]; then
-				$DOCKER_COMPOSE -f "$REDASH_BASE_PATH"/compose.yaml down
+				docker_compose -f "$REDASH_BASE_PATH"/compose.yaml down
 			fi
 
 			echo "Moving old Redash PG database directory out of the way"
@@ -325,10 +325,10 @@ startup() {
 		echo "** Starting Redash **"
 		echo "*********************"
 		echo "** Initialising Redash database **"
-		$DOCKER_COMPOSE run --rm server create_db
+		docker_compose run --rm server create_db
 
 		echo "** Starting the rest of Redash **"
-		$DOCKER_COMPOSE up -d
+		docker_compose up -d
 
 		echo
 		echo "Redash has been installed and is ready for configuring at http://$(hostname -f):5000"
@@ -380,7 +380,7 @@ fi
 
 # Detect the right Docker Compose command to use
 detect_compose_command
-echo "Using compose command: $DOCKER_COMPOSE"
+echo "Using compose command: $(docker_compose version | head -n1)"
 
 # Ensure pwgen is available (needed for generating secrets)
 if ! command -v pwgen >/dev/null 2>&1; then
