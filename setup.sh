@@ -42,11 +42,10 @@ detect_and_define_compose() {
 
 if command -v docker >/dev/null 2>&1; then
 	# Docker is already installed, detect which compose command to use
-	detect_and_define_compose || {
-		echo "Error: Failed to detect Docker Compose command." >&2
-		exit 1
-	}
-	SKIP_DOCKER_INSTALL=yes
+	if detect_and_define_compose; then
+		SKIP_DOCKER_INSTALL=yes
+	fi
+	# If Compose not found, continue to install docker-compose-plugin
 elif [ ! -f /etc/os-release ]; then
 	echo "Unknown Linux distribution.  This script presently works only on Debian, Fedora, Ubuntu, and RHEL (and compatible)"
 	exit 1
