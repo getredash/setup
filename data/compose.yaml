@@ -1,5 +1,5 @@
 x-redash-service: &redash-service
-  image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/redash:__TAG__
+  image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/redash:8.0.0.b32245
   depends_on:
     - postgres
     - redis
