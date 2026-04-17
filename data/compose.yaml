@@ -38,15 +38,11 @@ services:
     image: public.ecr.aws/docker/library/redis:7-alpine
     restart: unless-stopped
   postgres:
-    # [IMPORTANT]
-    # We intentionally fix the version to v17 to avoid automatic upgrade to v18 (or later).
-    # If you want to upgrade to v18, please refer to the official upgrade guide:
-    # https://github.com/pgautoupgrade/docker-pgautoupgrade#one-shot-mode
-    image: pgautoupgrade/pgautoupgrade:17-alpine
+    image: public.ecr.aws/docker/library/postgres:9.6-alpine
     env_file: /opt/redash/env
     volumes:
       - /opt/redash/postgres-data:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
   nginx:
     image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/nginx:latest
     ports:
