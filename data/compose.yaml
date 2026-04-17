@@ -1,6 +1,5 @@
-version: "2"
 x-redash-service: &redash-service
-  image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/redash:8.0.0.b32245
+  image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/redash:__TAG__
   depends_on:
     - postgres
     - redis
@@ -17,30 +16,37 @@ services:
   scheduler:
     <<: *redash-service
     command: scheduler
-    environment:
-      QUEUES: "celery"
-      WORKERS_COUNT: 1
+    depends_on:
+      - server
   scheduled_worker:
     <<: *redash-service
     command: worker
+    depends_on:
+      - server
     environment:
       QUEUES: "scheduled_queries,schemas"
       WORKERS_COUNT: 1
   adhoc_worker:
     <<: *redash-service
     command: worker
+    depends_on:
+      - server
     environment:
       QUEUES: "queries"
       WORKERS_COUNT: 2
   redis:
-    image: public.ecr.aws/docker/library/redis:5.0-alpine
-    restart: always
+    image: public.ecr.aws/docker/library/redis:7-alpine
+    restart: unless-stopped
   postgres:
-    image: public.ecr.aws/docker/library/postgres:9.6-alpine
+    # [IMPORTANT]
+    # We intentionally fix the version to v17 to avoid automatic upgrade to v18 (or later).
+    # If you want to upgrade to v18, please refer to the official upgrade guide:
+    # https://github.com/pgautoupgrade/docker-pgautoupgrade#one-shot-mode
+    image: pgautoupgrade/pgautoupgrade:17-alpine
     env_file: /opt/redash/env
     volumes:
       - /opt/redash/postgres-data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
   nginx:
     image: 070551638384.dkr.ecr.us-east-1.amazonaws.com/docker-hub/redash/nginx:latest
     ports:
@@ -50,3 +56,9 @@ services:
     links:
       - server:redash
     restart: always
+  worker:
+    <<: *redash-service
+    command: worker
+    environment:
+      QUEUES: "periodic,emails,default"
+      WORKERS_COUNT: 1

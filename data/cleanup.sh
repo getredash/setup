@@ -1,6 +1,8 @@
+#!/usr/bin/env bash
+
 rm -rf /tmp/* /var/tmp/*
 history -c
-cat /dev/null > /root/.bash_history
+cat /dev/null >/root/.bash_history
 unset HISTFILE
 apt-get -y autoremove
 apt-get -y autoclean
@@ -12,4 +14,5 @@ rm -rf /var/lib/cloud/instance
 echo "Removing keys..."
 rm -f /root/.ssh/authorized_keys /etc/ssh/*key*
 # dd if=/dev/zero of=/zerofile; sync; rm /zerofile; sync
-cat /dev/null > /var/log/lastlog; cat /dev/null > /var/log/wtmp
+cat /dev/null >/var/log/lastlog
+cat /dev/null >/var/log/wtmp
