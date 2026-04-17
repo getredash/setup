@@ -36,7 +36,7 @@ services:
     image: redis:5.0-alpine
     restart: always
   postgres:
-    image: postgres:9.6-alpine
+    image: public.ecr.aws/docker/library/postgres:9.6-alpine
     env_file: /opt/redash/env
     volumes:
       - /opt/redash/postgres-data:/var/lib/postgresql/data
