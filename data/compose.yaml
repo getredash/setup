@@ -38,7 +38,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
   postgres:
-    # pgautoupgrade handles automatic PostgreSQL major version upgrades.
+    # pgautoupgrade can perform PostgreSQL major version upgrades when you update this image tag to a newer major version.
     #
     # [NOTE FOR EXISTING USERS]
     # If upgrading from PG17 or earlier, the volume mount path has changed.
