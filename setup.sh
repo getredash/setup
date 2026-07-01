@@ -16,8 +16,8 @@ SCRIPT_NAME="$0"
 handle_error() {
 	if [ "x$DEBUG" != "xyes" ]; then
 		echo
-		echo "❌ An error occurred during installation."
-		echo "💡 For detailed output, please run: $SCRIPT_NAME --debug"
+		echo "ERROR: An error occurred during installation."
+		echo "TIP: For detailed output, please run: $SCRIPT_NAME --debug"
 		echo
 	fi
 	exit 1
@@ -26,19 +26,19 @@ handle_error() {
 # Background process with progress dots
 run_with_progress() {
 	RWP_MESSAGE="$1"
-	RWP_COMMAND="$2"
+	shift
 	
 	printf "%s" "$RWP_MESSAGE"
 	ERROR_LOG=$(mktemp)
-	eval "$RWP_COMMAND" >"$ERROR_LOG" 2>&1 &
+	"$@" >"$ERROR_LOG" 2>&1 &
 	PID=$!
 	trap 'kill "$PID" 2>/dev/null || true; rm -f "$ERROR_LOG"' EXIT INT TERM
 	while kill -0 "$PID" 2>/dev/null; do
 		printf "."
 		sleep 2
 	done
-	wait "$PID"
-	STATUS=$?
+	STATUS=0
+	wait "$PID" || STATUS=$?
 	trap - EXIT INT TERM
 	if [ "$STATUS" -ne 0 ]; then
 		echo " Failed!"
@@ -386,7 +386,7 @@ startup() {
 		if [ "x$DEBUG" = "xyes" ]; then
 			docker_compose run --rm server create_db || handle_error
 		else
-			run_with_progress "Creating database" "docker_compose run --rm server create_db"
+			run_with_progress "Creating database" docker_compose run --rm server create_db
 		fi
 
 		echo "** Starting the rest of Redash **"
