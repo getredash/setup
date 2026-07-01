@@ -110,7 +110,7 @@ See [Upgrade Guide](https://redash.io/help/open-source/admin-guide/how-to-upgrad
 ### How do I backup my PostgreSQL database?
 
 ```
-docker compose -f /opt/redash/compose.yaml exec -T postgres pg_dumpall -U postgres > backup-$(date +%Y%m%d).sql
+# docker compose -f /opt/redash/compose.yaml exec -T postgres pg_dumpall -U postgres > backup-$(date +%Y%m%d).sql
 ```
 
 ### How do I upgrade PostgreSQL to a newer major version?
