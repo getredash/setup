@@ -38,14 +38,22 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
   postgres:
-    # [IMPORTANT]
-    # We intentionally fix the version to v17 to avoid automatic upgrade to v18 (or later).
-    # If you want to upgrade to v18, please refer to the official upgrade guide:
-    # https://github.com/pgautoupgrade/docker-pgautoupgrade#one-shot-mode
-    image: pgautoupgrade/pgautoupgrade:17-alpine
+    # pgautoupgrade can perform PostgreSQL major version upgrades when you update this image tag to a newer major version.
+    #
+    # [NOTE FOR EXISTING USERS]
+    # If upgrading from PG17 or earlier, the volume mount path has changed.
+    # Backup your data first, then stop containers and update your volume from:
+    #   /opt/redash/postgres-data:/var/lib/postgresql/data
+    # to:
+    #   /opt/redash/postgres-data:/var/lib/postgresql
+    #
+    # pgautoupgrade will automatically migrate your data to the new directory structure.
+    #
+    # Details: https://github.com/pgautoupgrade/docker-pgautoupgrade#error-message-when-mounting-data-to-varlibpostgresqldata-on-postgres-v18
+    image: pgautoupgrade/pgautoupgrade:18-alpine
     env_file: /opt/redash/env
     volumes:
-      - /opt/redash/postgres-data:/var/lib/postgresql/data
+      - /opt/redash/postgres-data:/var/lib/postgresql
     restart: unless-stopped
   nginx:
     image: redash/nginx:latest

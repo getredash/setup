@@ -107,6 +107,19 @@ Redash for redundancy. You will also need to tweak the number of workers based o
 
 See [Upgrade Guide](https://redash.io/help/open-source/admin-guide/how-to-upgrade).
 
+### How do I backup my PostgreSQL database?
+
+```
+# docker compose -f /opt/redash/compose.yaml exec -T postgres pg_dumpall -U postgres > backup-$(date +%Y%m%d).sql
+```
+
+### How do I upgrade PostgreSQL to a newer major version?
+
+If you are running PostgreSQL 17 or earlier and want to upgrade to PostgreSQL 18, you need to update the volume mount
+path in your `/opt/redash/compose.yaml`.  See the
+[pgautoupgrade documentation](https://github.com/pgautoupgrade/docker-pgautoupgrade#error-message-when-mounting-data-to-varlibpostgresqldata-on-postgres-v18)
+for details.
+
 ### How do I use `setup.sh` on a different operating system?
 
 You will need to create a docker installation function that suits your operating system, and maybe other functions as
