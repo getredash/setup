@@ -127,7 +127,7 @@ while true; do
 		echo "  The --debug (also -g) option shows detailed Docker progress output instead of clean progress dots"
 		echo "  The --overwrite (also -o) option replaces any existing configuration with a fresh new install"
 		echo "  The --version option installs the specified version tag of Redash (e.g., 10.1.0)"
-		exit 1
+		exit 0
 		;;
 	--)
 		shift
